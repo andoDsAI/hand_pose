@@ -6,6 +6,7 @@ import torch.backends.cudnn as cudnn
 from config import cfg
 from base import Tester
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, dest='gpu_ids')
@@ -13,7 +14,7 @@ def parse_args():
     args = parser.parse_args()
 
     if not args.gpu_ids:
-        assert 0, "Please set propoer gpu ids"
+        assert 0, "Please set proper gpu ids"
 
     if '-' in args.gpu_ids:
         gpus = args.gpu_ids.split('-')
@@ -24,6 +25,7 @@ def parse_args():
     assert args.test_epoch, 'Test epoch is required.'
     return args
 
+
 def main():
 
     args = parse_args()
@@ -33,25 +35,28 @@ def main():
     tester = Tester(args.test_epoch)
     tester._make_batch_generator()
     tester._make_model()
-    
+
     eval_result = {}
     cur_sample_idx = 0
     for itr, (inputs, targets, meta_info) in enumerate(tqdm(tester.batch_generator)):
-        
+
         # forward
         with torch.no_grad():
             out = tester.model(inputs, targets, meta_info, 'test')
-       
+
         # save output
-        out = {k: v.cpu().numpy() for k,v in out.items()}
-        for k,v in out.items(): batch_size = out[k].shape[0]
-        out = [{k: v[bid] for k,v in out.items()} for bid in range(batch_size)]
+        out = {k: v.cpu().numpy() for k, v in out.items()}
+        for k, v in out.items():
+            batch_size = out[k].shape[0]
+        out = [{k: v[bid] for k, v in out.items()}
+               for bid in range(batch_size)]
 
         # evaluate
         tester._evaluate(out, cur_sample_idx)
         cur_sample_idx += len(out)
-    
+
     tester._print_eval_result(args.test_epoch)
+
 
 if __name__ == "__main__":
     main()

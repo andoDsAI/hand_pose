@@ -15,6 +15,7 @@ from utils.vis import vis_keypoints, vis_mesh, save_obj, vis_keypoints_with_skel
 from utils.mano import MANO
 mano = MANO()
 
+
 class HO3D(torch.utils.data.Dataset):
     def __init__(self, transform, data_split):
         self.transform = transform

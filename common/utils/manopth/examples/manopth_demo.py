@@ -18,8 +18,10 @@ if __name__ == '__main__':
         action='store_true',
         help="Disable display output of ManoLayer given random inputs")
     parser.add_argument('--side', default='left', choices=['left', 'right'])
-    parser.add_argument('--random_shape', action='store_true', help="Random hand shape")
-    parser.add_argument('--rand_mag', type=float, default=1, help="Controls pose variability")
+    parser.add_argument('--random_shape', action='store_true',
+                        help="Random hand shape")
+    parser.add_argument('--rand_mag', type=float, default=1,
+                        help="Controls pose variability")
     parser.add_argument(
         '--flat_hand_mean',
         action='store_true',
@@ -28,13 +30,15 @@ if __name__ == '__main__':
         '--iters',
         type=int,
         default=1,
-        help=
-        "Use for quick profiling of forward and backward pass accross ManoLayer"
+        help="Use for quick profiling of forward and backward pass accross ManoLayer"
     )
     parser.add_argument('--mano_root', default='mano/models')
-    parser.add_argument('--root_rot_mode', default='axisang', choices=['rot6d', 'axisang'])
-    parser.add_argument('--no_pca', action='store_true', help="Give axis-angle or rotation matrix as inputs instead of PCA coefficients")
-    parser.add_argument('--joint_rot_mode', default='axisang', choices=['rotmat', 'axisang'], help="Joint rotation inputs")
+    parser.add_argument('--root_rot_mode', default='axisang',
+                        choices=['rot6d', 'axisang'])
+    parser.add_argument('--no_pca', action='store_true',
+                        help="Give axis-angle or rotation matrix as inputs instead of PCA coefficients")
+    parser.add_argument('--joint_rot_mode', default='axisang',
+                        choices=['rotmat', 'axisang'], help="Joint rotation inputs")
     parser.add_argument(
         '--mano_ncomps', default=6, type=int, help="Number of PCA components")
     args = parser.parse_args()
@@ -58,7 +62,8 @@ if __name__ == '__main__':
         args.mano_ncomps = 45
 
     # Generate random pose coefficients
-    pose_params = args.rand_mag * torch.rand(args.batch_size, args.mano_ncomps + rot)
+    pose_params = args.rand_mag * \
+        torch.rand(args.batch_size, args.mano_ncomps + rot)
     pose_params.requires_grad = True
     if args.random_shape:
         shape = torch.rand(args.batch_size, 10)
@@ -88,4 +93,4 @@ if __name__ == '__main__':
             'verts': verts,
             'joints': joints
         },
-                     mano_faces=layer.th_faces)
+            mano_faces=layer.th_faces)

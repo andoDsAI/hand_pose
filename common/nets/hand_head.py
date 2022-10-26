@@ -2,6 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
+
 class hand_regHead(nn.Module):
     def __init__(self, roi_res=32, joint_nb=21, stacks=1, channels=256, blocks=1):
         """
@@ -19,10 +20,12 @@ class hand_regHead(nn.Module):
         self.blocks = blocks
         self.stacks = stacks
 
-        self.betas = nn.Parameter(torch.ones((self.joint_nb, 1), dtype=torch.float32))
+        self.betas = nn.Parameter(torch.ones(
+            (self.joint_nb, 1), dtype=torch.float32))
 
         center_offset = 0.5
-        vv, uu = torch.meshgrid(torch.arange(self.out_res).float(), torch.arange(self.out_res).float())
+        vv, uu = torch.meshgrid(torch.arange(
+            self.out_res).float(), torch.arange(self.out_res).float())
         uu, vv = uu + center_offset, vv + center_offset
         self.register_buffer("uu", uu / self.out_res)
         self.register_buffer("vv", vv / self.out_res)
@@ -34,12 +37,16 @@ class hand_regHead(nn.Module):
         hg, res, fc, score, fc_, score_ = [], [], [], [], [], []
         for i in range(self.stacks):
             hg.append(Hourglass(block, self.blocks, self.features, 4))
-            res.append(self.make_residual(block, self.channels, self.features, self.blocks))
+            res.append(self.make_residual(
+                block, self.channels, self.features, self.blocks))
             fc.append(BasicBlock(self.channels, self.channels, kernel_size=1))
-            score.append(nn.Conv2d(self.channels, self.joint_nb, kernel_size=1, bias=True))
+            score.append(nn.Conv2d(self.channels, self.joint_nb,
+                         kernel_size=1, bias=True))
             if i < self.stacks - 1:
-                fc_.append(nn.Conv2d(self.channels, self.channels, kernel_size=1, bias=True))
-                score_.append(nn.Conv2d(self.joint_nb, self.channels, kernel_size=1, bias=True))
+                fc_.append(nn.Conv2d(self.channels, self.channels,
+                           kernel_size=1, bias=True))
+                score_.append(
+                    nn.Conv2d(self.joint_nb, self.channels, kernel_size=1, bias=True))
 
         self.hg = nn.ModuleList(hg)
         self.res = nn.ModuleList(res)
@@ -79,7 +86,7 @@ class hand_regHead(nn.Module):
             y = self.res[i](y)
             y = self.fc[i](y)
             latents = self.score[i](y)
-            heatmaps= self.spatial_softmax(latents)
+            heatmaps = self.spatial_softmax(latents)
             out.append(heatmaps)
             predictions = self.generate_output(heatmaps)
             preds.append(predictions)
@@ -94,12 +101,12 @@ class hand_regHead(nn.Module):
 
 
 class BasicBlock(nn.Module):
-    def __init__(self, in_planes, out_planes, kernel_size,groups=1):
+    def __init__(self, in_planes, out_planes, kernel_size, groups=1):
         super(BasicBlock, self).__init__()
         self.block = nn.Sequential(
             nn.Conv2d(in_planes, out_planes, kernel_size=kernel_size,
                       stride=1, padding=((kernel_size - 1) // 2),
-                      groups=groups,bias=True),
+                      groups=groups, bias=True),
             nn.BatchNorm2d(out_planes),
             nn.LeakyReLU(inplace=True)
         )
@@ -115,14 +122,18 @@ class Residual(nn.Module):
         self.numOut = numOut
         self.bn = nn.BatchNorm2d(self.numIn)
         self.leakyrelu = nn.LeakyReLU(inplace=True)
-        self.conv1 = nn.Conv2d(self.numIn, self.numOut // 2, bias=True, kernel_size=1)
+        self.conv1 = nn.Conv2d(self.numIn, self.numOut //
+                               2, bias=True, kernel_size=1)
         self.bn1 = nn.BatchNorm2d(self.numOut // 2)
-        self.conv2 = nn.Conv2d(self.numOut // 2, self.numOut // 2, bias=True, kernel_size=3, stride=1, padding=1)
+        self.conv2 = nn.Conv2d(self.numOut // 2, self.numOut //
+                               2, bias=True, kernel_size=3, stride=1, padding=1)
         self.bn2 = nn.BatchNorm2d(self.numOut // 2)
-        self.conv3 = nn.Conv2d(self.numOut // 2, self.numOut, bias=True, kernel_size=1)
+        self.conv3 = nn.Conv2d(
+            self.numOut // 2, self.numOut, bias=True, kernel_size=1)
 
         if self.numIn != self.numOut:
-            self.conv4 = nn.Conv2d(self.numIn, self.numOut, bias=True, kernel_size=1)
+            self.conv4 = nn.Conv2d(
+                self.numIn, self.numOut, bias=True, kernel_size=1)
 
     def forward(self, x):
         residual = x
@@ -149,12 +160,14 @@ class Bottleneck(nn.Module):
         super(Bottleneck, self).__init__()
 
         self.bn1 = nn.BatchNorm2d(inplanes)
-        self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=True, groups=groups)
+        self.conv1 = nn.Conv2d(
+            inplanes, planes, kernel_size=1, bias=True, groups=groups)
         self.bn2 = nn.BatchNorm2d(planes)
         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
                                padding=1, bias=True, groups=groups)
         self.bn3 = nn.BatchNorm2d(planes)
-        self.conv3 = nn.Conv2d(planes, planes * 2, kernel_size=1, bias=True, groups=groups)
+        self.conv3 = nn.Conv2d(
+            planes, planes * 2, kernel_size=1, bias=True, groups=groups)
         self.leakyrelu = nn.LeakyReLU(inplace=True)  # negative_slope=0.01
         self.skip = skip
         self.stride = stride
@@ -222,9 +235,11 @@ class Hourglass(nn.Module):
         if n > 1:
             low2 = self._hour_glass_forward(n - 1, low1)
         else:
-            low2 = self.hg[n - 1][3](low1)  # only for depth=1 basic path of the hourglass network
+            # only for depth=1 basic path of the hourglass network
+            low2 = self.hg[n - 1][3](low1)
         low3 = self.hg[n - 1][2](low2)
-        up2 = F.interpolate(low3, scale_factor=2)  # scale_factor=2 should be consistent with F.max_pool2d(2,stride=2)
+        # scale_factor=2 should be consistent with F.max_pool2d(2,stride=2)
+        up2 = F.interpolate(low3, scale_factor=2)
         out = up1 + up2
         return out
 
@@ -261,10 +276,13 @@ class hand_Encoder(nn.Module):
         self.downsample_scale = 2 ** self.nRegBlock
 
         # fc layers
-        self.num_feat_out = self.num_feat_chan * (size_input_feature[0] * size_input_feature[1] // (self.downsample_scale ** 2))
+        self.num_feat_out = self.num_feat_chan * \
+            (size_input_feature[0] * size_input_feature[1] //
+             (self.downsample_scale ** 2))
 
     def forward(self, hm_list, encoding_list):
-        x = self.heatmap_conv(hm_list[-1]) + self.encoding_conv(encoding_list[-1])
+        x = self.heatmap_conv(hm_list[-1]) + \
+            self.encoding_conv(encoding_list[-1])
         if len(encoding_list) > 1:
             x = x + encoding_list[-2]
 

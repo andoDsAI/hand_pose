@@ -21,4 +21,4 @@ demo.display_hand({
     'verts': hand_verts,
     'joints': hand_joints
 },
-                  mano_faces=mano_layer.th_faces)
+    mano_faces=mano_layer.th_faces)

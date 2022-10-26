@@ -13,7 +13,7 @@ RED = FAIL
 WHITE = END
 YELLOW = WARNING
 
-class colorlogger():
+class ColorLogger():
     def __init__(self, log_dir, log_name='train_logs.txt'):
         # set log
         self._logger = logging.getLogger(log_name)

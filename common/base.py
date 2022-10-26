@@ -8,20 +8,21 @@ from torch.utils.data import DataLoader
 import torch.optim
 import torchvision.transforms as transforms
 from timer import Timer
-from logger import colorlogger
+from logger import ColorLogger
 from torch.nn.parallel.data_parallel import DataParallel
 from config import cfg
 from model import get_model
 
 # dynamic dataset import
-exec('from ' + cfg.trainset + ' import ' + cfg.trainset)
-exec('from ' + cfg.testset + ' import ' + cfg.testset)
+exec('from ' + cfg.train_set + ' import ' + cfg.train_set)
+exec('from ' + cfg.test_set + ' import ' + cfg.test_set)
+
 
 class Base(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, log_name='logs.txt'):
-        
+
         self.cur_epoch = 0
 
         # timer
@@ -30,7 +31,7 @@ class Base(object):
         self.read_timer = Timer()
 
         # logger
-        self.logger = colorlogger(cfg.log_dir, log_name=log_name)
+        self.logger = ColorLogger(cfg.log_dir, log_name=log_name)
 
     @abc.abstractmethod
     def _make_batch_generator(self):
@@ -40,9 +41,10 @@ class Base(object):
     def _make_model(self):
         return
 
+
 class Trainer(Base):
     def __init__(self):
-        super(Trainer, self).__init__(log_name = 'train_logs.txt')
+        super(Trainer, self).__init__(log_name='train_logs.txt')
 
     def get_optimizer(self, model):
         model_params = filter(lambda p: p.requires_grad, model.parameters())
@@ -50,18 +52,21 @@ class Trainer(Base):
         return optimizer
 
     def save_model(self, state, epoch):
-        file_path = osp.join(cfg.model_dir,'snapshot_{}.pth.tar'.format(str(epoch)))
+        file_path = osp.join(
+            cfg.model_dir, 'snapshot_{}.pth.tar'.format(str(epoch)))
         torch.save(state, file_path)
         self.logger.info("Write snapshot into {}".format(file_path))
 
     def load_model(self, model, optimizer):
-        model_file_list = glob.glob(osp.join(cfg.model_dir,'*.pth.tar'))
-        cur_epoch = max([int(file_name[file_name.find('snapshot_') + 9 : file_name.find('.pth.tar')]) for file_name in model_file_list])
-        ckpt_path = osp.join(cfg.model_dir, 'snapshot_' + str(cur_epoch) + '.pth.tar')
-        ckpt = torch.load(ckpt_path) 
+        model_file_list = glob.glob(osp.join(cfg.model_dir, '*.pth.tar'))
+        cur_epoch = max([int(file_name[file_name.find(
+            'snapshot_') + 9: file_name.find('.pth.tar')]) for file_name in model_file_list])
+        ckpt_path = osp.join(cfg.model_dir, 'snapshot_' +
+                             str(cur_epoch) + '.pth.tar')
+        ckpt = torch.load(ckpt_path)
         start_epoch = ckpt['epoch'] + 1
         model.load_state_dict(ckpt['network'], strict=False)
-        #optimizer.load_state_dict(ckpt['optimizer'])
+        # optimizer.load_state_dict(ckpt['optimizer'])
 
         self.logger.info('Load checkpoint from {}'.format(ckpt_path))
         return start_epoch, model, optimizer
@@ -82,14 +87,16 @@ class Trainer(Base):
         for g in self.optimizer.param_groups:
             cur_lr = g['lr']
         return cur_lr
-    
+
     def _make_batch_generator(self):
         # data load and construct batch generator
         self.logger.info("Creating dataset...")
-        train_dataset = eval(cfg.trainset)(transforms.ToTensor(), "train")
-            
-        self.itr_per_epoch = math.ceil(len(train_dataset) / cfg.num_gpus / cfg.train_batch_size)
-        self.batch_generator = DataLoader(dataset=train_dataset, batch_size=cfg.num_gpus*cfg.train_batch_size, shuffle=True, num_workers=cfg.num_thread, pin_memory=True)
+        train_dataset = eval(cfg.train_set)(transforms.ToTensor(), "train")
+
+        self.itr_per_epoch = math.ceil(
+            len(train_dataset) / cfg.num_gpus / cfg.train_batch_size)
+        self.batch_generator = DataLoader(dataset=train_dataset, batch_size=cfg.num_gpus *
+                                          cfg.train_batch_size, shuffle=True, num_workers=cfg.num_thread, pin_memory=True)
 
     def _make_model(self):
         # prepare network
@@ -108,22 +115,25 @@ class Trainer(Base):
         self.model = model
         self.optimizer = optimizer
 
+
 class Tester(Base):
     def __init__(self, test_epoch):
         self.test_epoch = int(test_epoch)
-        super(Tester, self).__init__(log_name = 'test_logs.txt')
+        super(Tester, self).__init__(log_name='test_logs.txt')
 
     def _make_batch_generator(self):
         # data load and construct batch generator
         self.logger.info("Creating dataset...")
-        self.test_dataset = eval(cfg.testset)(transforms.ToTensor(), "test")
-        self.batch_generator = DataLoader(dataset=self.test_dataset, batch_size=cfg.num_gpus*cfg.test_batch_size, shuffle=False, num_workers=cfg.num_thread, pin_memory=True)
-       
+        self.test_dataset = eval(cfg.test_set)(transforms.ToTensor(), "test")
+        self.batch_generator = DataLoader(dataset=self.test_dataset, batch_size=cfg.num_gpus *
+                                          cfg.test_batch_size, shuffle=False, num_workers=cfg.num_thread, pin_memory=True)
+
     def _make_model(self):
-        model_path = os.path.join(cfg.model_dir, 'snapshot_%d.pth.tar' % self.test_epoch)
+        model_path = os.path.join(
+            cfg.model_dir, 'snapshot_%d.pth.tar' % self.test_epoch)
         assert os.path.exists(model_path), 'Cannot find model at ' + model_path
         self.logger.info('Load checkpoint from {}'.format(model_path))
-        
+
         # prepare network
         self.logger.info("Creating graph...")
         model = get_model('test')

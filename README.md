@@ -97,7 +97,7 @@ ${ROOT}
 
 ### Train  
 
-In the `main` folder, set trainset in `config.py` (as 'HO3D' or 'DEX_YCB') and run  
+In the `main` folder, set train_set in `config.py` (as 'HO3D' or 'DEX_YCB') and run  
 
 ```bash  
 python train.py --gpu 0-3
@@ -109,7 +109,7 @@ to train HandOccNet on the GPU 0,1,2,3. `--gpu 0,1,2,3` can be used instead of `
 
 Place trained model at the `output/model_dump/`.
   
-In the `main` folder, set testset in `config.py` (as 'HO3D' or 'DEX_YCB') and run  
+In the `main` folder, set test_set in `config.py` (as 'HO3D' or 'DEX_YCB') and run  
 
 ```bash  
 python test.py --gpu 0-3 --test_epoch {test epoch}  

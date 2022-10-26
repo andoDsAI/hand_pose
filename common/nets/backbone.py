@@ -7,6 +7,7 @@ import torch
 
 from nets.cbam import SpatialGate
 
+
 class FPN(nn.Module):
     def __init__(self, pretrained=True):
         super(FPN, self).__init__()
@@ -14,9 +15,11 @@ class FPN(nn.Module):
 
         resnet = resnet50(pretrained=pretrained)
 
-        self.toplayer = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)  # Reduce channels
+        self.toplayer = nn.Conv2d(
+            2048, 256, kernel_size=1, stride=1, padding=0)  # Reduce channels
 
-        self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.leakyrelu, resnet.maxpool)
+        self.layer0 = nn.Sequential(
+            resnet.conv1, resnet.bn1, resnet.leakyrelu, resnet.maxpool)
         self.layer1 = nn.Sequential(resnet.layer1)
         self.layer2 = nn.Sequential(resnet.layer2)
         self.layer3 = nn.Sequential(resnet.layer3)
@@ -28,9 +31,12 @@ class FPN(nn.Module):
         self.smooth3 = nn.Conv2d(256, 256, kernel_size=3, stride=1, padding=1)
 
         # Lateral layers
-        self.latlayer1 = nn.Conv2d(1024, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer2 = nn.Conv2d( 512, 256, kernel_size=1, stride=1, padding=0)
-        self.latlayer3 = nn.Conv2d( 256, 256, kernel_size=1, stride=1, padding=0)
+        self.latlayer1 = nn.Conv2d(
+            1024, 256, kernel_size=1, stride=1, padding=0)
+        self.latlayer2 = nn.Conv2d(
+            512, 256, kernel_size=1, stride=1, padding=0)
+        self.latlayer3 = nn.Conv2d(
+            256, 256, kernel_size=1, stride=1, padding=0)
 
         # Attention Module
         self.attention_module = SpatialGate()
@@ -39,7 +45,7 @@ class FPN(nn.Module):
 
     def _upsample_add(self, x, y):
         _, _, H, W = y.size()
-        return F.interpolate(x, size=(H,W), mode='bilinear', align_corners=False) + y
+        return F.interpolate(x, size=(H, W), mode='bilinear', align_corners=False) + y
 
     def forward(self, x):
         # Bottom-up
@@ -57,11 +63,11 @@ class FPN(nn.Module):
         #p4 = self.smooth1(p4)
         p3 = self.smooth2(p3)
         p2 = self.smooth3(p2)
-        
+
         # Attention
         p2 = self.pool(p2)
         primary_feats, secondary_feats = self.attention_module(p2)
-        
+
         return primary_feats, secondary_feats
 
 
@@ -69,7 +75,8 @@ class ResNet(nn.Module):
     def __init__(self, block, layers, num_classes=1000):
         self.inplanes = 64
         super(ResNet, self).__init__()
-        self.conv1 = nn.Conv2d(3, 64, kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(3, 64, kernel_size=7,
+                               stride=2, padding=3, bias=False)
         self.bn1 = nn.BatchNorm2d(64)
         self.leakyrelu = nn.LeakyReLU(inplace=True)
         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
@@ -82,7 +89,8 @@ class ResNet(nn.Module):
 
         for m in self.modules():
             if isinstance(m, nn.Conv2d):
-                nn.init.kaiming_normal_(m.weight, mode="fan_out", nonlinearity="leaky_relu")
+                nn.init.kaiming_normal_(
+                    m.weight, mode="fan_out", nonlinearity="leaky_relu")
             elif isinstance(m, nn.BatchNorm2d):
                 nn.init.constant_(m.weight, 1)
                 nn.init.constant_(m.bias, 0)
@@ -123,7 +131,8 @@ def resnet50(pretrained=False, **kwargs):
     """Constructs a ResNet-50 model Encoder"""
     model = ResNet(Bottleneck, [3, 4, 6, 3], **kwargs)
     if pretrained:
-        model.load_state_dict(model_zoo.load_url("https://download.pytorch.org/models/resnet50-19c8e357.pth"))
+        model.load_state_dict(model_zoo.load_url(
+            "https://download.pytorch.org/models/resnet50-19c8e357.pth"))
     return model
 
 

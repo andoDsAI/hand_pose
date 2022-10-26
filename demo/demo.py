@@ -18,6 +18,7 @@ from utils.vis import save_obj
 from utils.mano import MANO
 mano = MANO()
 
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--gpu', type=str, dest='gpu_ids')
@@ -34,6 +35,7 @@ def parse_args():
         args.gpu_ids = ','.join(map(lambda x: str(x), list(range(*gpus))))
 
     return args
+
 
 # argument parsing
 args = parse_args()
@@ -58,12 +60,13 @@ original_img = load_img(img_path)
 original_img_height, original_img_width = original_img.shape[:2]
 
 # prepare bbox
-bbox = [340.8, 232.0, 20.7, 20.7] # xmin, ymin, width, height 
+bbox = [340.8, 232.0, 20.7, 20.7]  # xmin, ymin, width, height
 
 bbox = process_bbox(bbox, original_img_width, original_img_height)
-img, img2bb_trans, bb2img_trans = generate_patch_image(original_img, bbox, 1.0, 0.0, False, cfg.input_img_shape) 
+img, img2bb_trans, bb2img_trans = generate_patch_image(
+    original_img, bbox, 1.0, 0.0, False, cfg.input_img_shape)
 img = transform(img.astype(np.float32))/255
-img = img.cuda()[None,:,:,:]
+img = img.cuda()[None, :, :, :]
 
 # forward
 inputs = {'img': img}
@@ -71,17 +74,19 @@ targets = {}
 meta_info = {}
 with torch.no_grad():
     out = model(inputs, targets, meta_info, 'test')
-img = (img[0].cpu().numpy().transpose(1,2,0)*255).astype(np.uint8) # cfg.input_img_shape[1], cfg.input_img_shape[0], 3
+# cfg.input_img_shape[1], cfg.input_img_shape[0], 3
+img = (img[0].cpu().numpy().transpose(1, 2, 0)*255).astype(np.uint8)
 verts_out = out['mesh_coord_cam'][0].cpu().numpy()
 
 # bbox for input hand image
 bbox_vis = np.array(bbox, int)
 bbox_vis[2:] += bbox_vis[:2]
-cvimg = cv2.rectangle(original_img.copy(), bbox_vis[:2], bbox_vis[2:], (255,0,0), 3)
-cv2.imwrite('hand_bbox.png', cvimg[:,:,::-1])
+cvimg = cv2.rectangle(original_img.copy(),
+                      bbox_vis[:2], bbox_vis[2:], (255, 0, 0), 3)
+cv2.imwrite('hand_bbox.png', cvimg[:, :, ::-1])
 
-## input hand image
-cv2.imwrite('hand_image.png', img[:,:,::-1])
+# input hand image
+cv2.imwrite('hand_image.png', img[:, :, ::-1])
 
 # save mesh (obj)
-save_obj(verts_out*np.array([1,-1,-1]), mano.face, 'output.obj')
+save_obj(verts_out*np.array([1, -1, -1]), mano.face, 'output.obj')

@@ -4,6 +4,7 @@ from torch.nn import functional as F
 from utils.mano import MANO
 mano = MANO()
 
+
 def batch_rodrigues(theta):
     # theta N x 3
     l1norm = torch.norm(theta + 1e-8, p=2, dim=1)
@@ -22,7 +23,8 @@ def quat2mat(quat):
     """
     norm_quat = quat
     norm_quat = norm_quat / norm_quat.norm(p=2, dim=1, keepdim=True)
-    w, x, y, z = norm_quat[:, 0], norm_quat[:, 1], norm_quat[:, 2], norm_quat[:, 3]
+    w, x, y, z = norm_quat[:, 0], norm_quat[:,
+                                            1], norm_quat[:, 2], norm_quat[:, 3]
 
     B = quat.size(0)
 
@@ -190,11 +192,14 @@ class mano_regHead(nn.Module):
     def forward(self, features, gt_mano_params=None):
         mano_features = self.mano_base_layer(features)
         pred_mano_pose_6d = self.pose_reg(mano_features)
-        
-        pred_mano_pose_rotmat = rot6d2mat(pred_mano_pose_6d.view(-1, 6)).view(-1, 16, 3, 3).contiguous()
+
+        pred_mano_pose_rotmat = rot6d2mat(
+            pred_mano_pose_6d.view(-1, 6)).view(-1, 16, 3, 3).contiguous()
         pred_mano_shape = self.shape_reg(mano_features)
-        pred_mano_pose = mat2aa(pred_mano_pose_rotmat.view(-1, 3, 3)).contiguous().view(-1, self.mano_pose_size)
-        pred_verts, pred_joints = self.mano_layer(th_pose_coeffs=pred_mano_pose, th_betas=pred_mano_shape)
+        pred_mano_pose = mat2aa(
+            pred_mano_pose_rotmat.view(-1, 3, 3)).contiguous().view(-1, self.mano_pose_size)
+        pred_verts, pred_joints = self.mano_layer(
+            th_pose_coeffs=pred_mano_pose, th_betas=pred_mano_shape)
 
         pred_verts /= 1000
         pred_joints /= 1000
@@ -209,8 +214,10 @@ class mano_regHead(nn.Module):
         if gt_mano_params is not None:
             gt_mano_shape = gt_mano_params[:, self.mano_pose_size:]
             gt_mano_pose = gt_mano_params[:, :self.mano_pose_size].contiguous()
-            gt_mano_pose_rotmat = batch_rodrigues(gt_mano_pose.view(-1, 3)).view(-1, 16, 3, 3)
-            gt_verts, gt_joints = self.mano_layer(th_pose_coeffs=gt_mano_pose, th_betas=gt_mano_shape)
+            gt_mano_pose_rotmat = batch_rodrigues(
+                gt_mano_pose.view(-1, 3)).view(-1, 16, 3, 3)
+            gt_verts, gt_joints = self.mano_layer(
+                th_pose_coeffs=gt_mano_pose, th_betas=gt_mano_shape)
 
             gt_verts /= 1000
             gt_joints /= 1000

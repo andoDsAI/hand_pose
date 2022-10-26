@@ -13,7 +13,7 @@ def parse_args():
     args = parser.parse_args()
 
     if not args.gpu_ids:
-        assert 0, "Please set propoer gpu ids"
+        assert 0, "Please set proper gpu ids"
 
     if '-' in args.gpu_ids:
         gpus = args.gpu_ids.split('-')
@@ -25,7 +25,6 @@ def parse_args():
 
 
 def main():
-
     # argument parse and create log
     args = parse_args()
     cfg.set_args(args.gpu_ids, args.continue_train)
@@ -37,7 +36,7 @@ def main():
 
     # train
     for epoch in range(trainer.start_epoch, cfg.end_epoch):
-
+        
         trainer.set_lr(epoch)
         trainer.tot_timer.tic()
         trainer.read_timer.tic()
