@@ -1,6 +1,7 @@
 import os
 import os.path as osp
 import sys
+
 import numpy as np
 
 
@@ -8,19 +9,19 @@ class Config:
 
     # dataset
     # HO3D, DEX_YCB
-    train_set = 'HO3D'
-    test_set = 'HO3D'
+    train_set = "HO3D"
+    test_set = "HO3D"
 
     ## input, output
     input_img_shape = (256, 256)
 
     # training config
-    if train_set == 'HO3D':
-        lr_dec_epoch = [10*i for i in range(1, 7)]
+    if train_set == "HO3D":
+        lr_dec_epoch = [10 * i for i in range(1, 7)]
         end_epoch = 70
         lr = 1e-4
         lr_dec_factor = 0.7
-    elif train_set == 'DEX_YCB':
+    elif train_set == "DEX_YCB":
         lr_dec_epoch = [i for i in range(1, 25)]
         end_epoch = 25
         lr = 1e-4
@@ -38,34 +39,33 @@ class Config:
 
     # others
     num_thread = 20
-    gpu_ids = '0'
+    gpu_ids = "0"
     num_gpus = 1
     continue_train = False
 
     # directory
     cur_dir = osp.dirname(os.path.abspath(__file__))
-    root_dir = osp.join(cur_dir, '..')
-    data_dir = osp.join(root_dir, 'data')
-    output_dir = osp.join(root_dir, 'output')
-    model_dir = osp.join(output_dir, 'model_dump')
-    vis_dir = osp.join(output_dir, 'vis')
-    log_dir = osp.join(output_dir, 'log')
-    result_dir = osp.join(output_dir, 'result')
-    mano_path = osp.join(root_dir, 'common', 'utils', 'manopth')
+    root_dir = osp.join(cur_dir, "..")
+    data_dir = osp.join(root_dir, "data")
+    output_dir = osp.join(root_dir, "output")
+    model_dir = osp.join(output_dir, "model_dump")
+    vis_dir = osp.join(output_dir, "vis")
+    log_dir = osp.join(output_dir, "log")
+    result_dir = osp.join(output_dir, "result")
+    mano_path = osp.join(root_dir, "common", "utils", "manopth")
 
     def set_args(self, gpu_ids, continue_train=False):
         self.gpu_ids = gpu_ids
-        self.num_gpus = len(self.gpu_ids.split(','))
+        self.num_gpus = len(self.gpu_ids.split(","))
         self.continue_train = continue_train
         os.environ["CUDA_VISIBLE_DEVICES"] = self.gpu_ids
-        print('>>> Using GPU: {}'.format(self.gpu_ids))
+        print(">>> Using GPU: {}".format(self.gpu_ids))
 
 
 cfg = Config()
 
-sys.path.insert(0, osp.join(cfg.root_dir, 'common'))
+sys.path.insert(0, osp.join(cfg.root_dir, "common"))
 from utils.dir import add_pypath, make_folder
-
 
 add_pypath(osp.join(cfg.data_dir))
 add_pypath(osp.join(cfg.data_dir, cfg.train_set))

@@ -1,18 +1,17 @@
+import numpy as np
+import torch
+from manopth.manolayer import ManoLayer
 from matplotlib import pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
-import numpy as np
-import torch
-
-from manopth.manolayer import ManoLayer
 
 
-def generate_random_hand(batch_size=1, ncomps=6, mano_root='mano/models'):
+def generate_random_hand(batch_size=1, ncomps=6, mano_root="mano/models"):
     nfull_comps = ncomps + 3  # Add global orientation dims to PCA
     random_pcapose = torch.rand(batch_size, nfull_comps)
     mano_layer = ManoLayer(mano_root=mano_root)
     verts, joints = mano_layer(random_pcapose)
-    return {'verts': verts, 'joints': joints, 'faces': mano_layer.th_faces}
+    return {"verts": verts, "joints": joints, "faces": mano_layer.th_faces}
 
 
 def display_hand(hand_info, mano_faces=None, ax=None, alpha=0.2, batch_idx=0, show=True):
@@ -22,9 +21,8 @@ def display_hand(hand_info, mano_faces=None, ax=None, alpha=0.2, batch_idx=0, sh
     """
     if ax is None:
         fig = plt.figure()
-        ax = fig.add_subplot(111, projection='3d')
-    verts, joints = hand_info['verts'][batch_idx], hand_info['joints'][
-        batch_idx]
+        ax = fig.add_subplot(111, projection="3d")
+    verts, joints = hand_info["verts"][batch_idx], hand_info["joints"][batch_idx]
     if mano_faces is None:
         ax.scatter(verts[:, 0], verts[:, 1], verts[:, 2], alpha=0.1)
     else:
@@ -34,7 +32,7 @@ def display_hand(hand_info, mano_faces=None, ax=None, alpha=0.2, batch_idx=0, sh
         mesh.set_edgecolor(edge_color)
         mesh.set_facecolor(face_color)
         ax.add_collection3d(mesh)
-    ax.scatter(joints[:, 0], joints[:, 1], joints[:, 2], color='r')
+    ax.scatter(joints[:, 0], joints[:, 1], joints[:, 2], color="r")
     cam_equal_aspect_3d(ax, verts.numpy())
     if show:
         plt.show()
