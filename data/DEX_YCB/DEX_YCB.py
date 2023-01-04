@@ -45,19 +45,20 @@ class DEX_YCB(torch.utils.data.Dataset):
         self.annot_path = osp.join(self.root_dir, "annotations")
         self.root_joint_idx = 0
 
-        self.datalist = self.load_data()
+        self.data_list = self.load_data()
         if self.data_split != "train":
             self.eval_result = [[], []]  # [mpjpe_list, pa-mpjpe_list]
 
     def load_data(self):
         db = COCO(osp.join(self.annot_path, "DEX_YCB_s0_{}_data.json".format(self.data_split)))
 
-        datalist = []
+        data_list = []
         for aid in db.anns.keys():
             ann = db.anns[aid]
             image_id = ann["image_id"]
             img = db.loadImgs(image_id)[0]
             img_path = osp.join(self.root_dir, img["file_name"])
+            depth_img_path = "aligned_depth_to_" + img_path.replace(".jpg", ".png")
             img_shape = (img["height"], img["width"])
             if self.data_split == "train":
                 joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
@@ -80,6 +81,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
                 data = {
                     "img_path": img_path,
+                    "depth_img_path": depth_img_path,
                     "img_shape": img_shape,
                     "joints_coord_cam": joints_coord_cam,
                     "joints_coord_img": joints_coord_img,
@@ -108,6 +110,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
                 data = {
                     "img_path": img_path,
+                    "depth_img_path": depth_img_path,
                     "img_shape": img_shape,
                     "joints_coord_cam": joints_coord_cam,
                     "root_joint_cam": root_joint_cam,
@@ -117,15 +120,20 @@ class DEX_YCB(torch.utils.data.Dataset):
                     "hand_type": hand_type,
                 }
 
-            datalist.append(data)
-        return datalist
+            data_list.append(data)
+        return data_list
 
     def __len__(self):
-        return len(self.datalist)
+        return len(self.data_list)
 
     def __getitem__(self, idx):
-        data = copy.deepcopy(self.datalist[idx])
-        img_path, img_shape, bbox = data["img_path"], data["img_shape"], data["bbox"]
+        data = copy.deepcopy(self.data_list[idx])
+        img_path, depth_img_path, img_shape, bbox = (
+            data["img_path"],
+            data["depth_img_path"],
+            data["img_shape"],
+            data["bbox"],
+        )
         hand_type = data["hand_type"]
         do_flip = hand_type == "left"
 
@@ -136,6 +144,14 @@ class DEX_YCB(torch.utils.data.Dataset):
             img, bbox, self.data_split, do_flip=do_flip
         )
         img = self.transform(img.astype(np.float32)) / 255.0
+
+        # depth image
+        depth_img = load_img(depth_img_path, order="GRAY")
+        orig_depth_img = copy.deepcopy(depth_img)[:, :, ::-1]
+        depth_img, depth_img2bb_trans, bb2depth_trans, rot, scale = augmentation(
+            depth_img, bbox, self.data_split, do_flip=do_flip
+        )
+        depth_img = self.transform(depth_img.astype(np.float32)) / 255.0
 
         if self.data_split == "train":
             # 2D joint coordinate
@@ -186,7 +202,7 @@ class DEX_YCB(torch.utils.data.Dataset):
             mano_pose[self.root_joint_idx] = root_pose.reshape(3)
             mano_pose = mano_pose.reshape(-1)
 
-            inputs = {"img": img}
+            inputs = {"img": img, "depth_img": depth_img}
             targets = {
                 "joints_img": joints_img,
                 "joints_coord_cam": joints_coord_cam,
@@ -197,14 +213,14 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         else:
             root_joint_cam = data["root_joint_cam"]
-            inputs = {"img": img}
+            inputs = {"img": img, "depth_img": depth_img}
             targets = {}
             meta_info = {"root_joint_cam": root_joint_cam}
 
         return inputs, targets, meta_info
 
     def evaluate(self, outs, cur_sample_idx):
-        annots = self.datalist
+        annots = self.data_list
         sample_num = len(outs)
         for n in range(sample_num):
             annot = annots[cur_sample_idx + n]
@@ -244,7 +260,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
     """
     def evaluate(self, outs, cur_sample_idx):
-        annots = self.datalist
+        annots = self.data_list
         sample_num = len(outs)
         for n in range(sample_num):
             annot = annots[cur_sample_idx + n]
@@ -276,6 +292,6 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         with open(output_file_path, 'w') as output_file:
             for i, pred_joints in enumerate(self.eval_result[0]):
-                image_id = self.datalist[i]['image_id']
+                image_id = self.data_list[i]['image_id']
                 output_file.write(str(image_id) + ',' + ','.join(pred_joints.ravel().astype(str).tolist()) + '\n')
     """

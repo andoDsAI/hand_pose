@@ -13,8 +13,11 @@ def load_img(path, order="RGB"):
         raise IOError("Fail to read %s" % path)
 
     if order == "RGB":
-        img = img[:, :, ::-1].copy()
-
+        # img = img[:, :, ::-1].copy()
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    if order == "GRAY":
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        
     img = img.astype(np.float32)
     return img
 

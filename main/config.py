@@ -2,15 +2,13 @@ import os
 import os.path as osp
 import sys
 
-import numpy as np
-
 
 class Config:
 
     # dataset
     # HO3D, DEX_YCB
-    train_set = "HO3D"
-    test_set = "HO3D"
+    train_set = "DEX_YCB"
+    test_set = "DEX_YCB"
 
     ## input, output
     input_img_shape = (256, 256)
@@ -65,11 +63,11 @@ class Config:
 cfg = Config()
 
 sys.path.insert(0, osp.join(cfg.root_dir, "common"))
-from utils.dir import add_pypath, make_folder
+from utils.dir import add_path, make_folder
 
-add_pypath(osp.join(cfg.data_dir))
-add_pypath(osp.join(cfg.data_dir, cfg.train_set))
-add_pypath(osp.join(cfg.data_dir, cfg.test_set))
+add_path(osp.join(cfg.data_dir))
+add_path(osp.join(cfg.data_dir, cfg.train_set))
+add_path(osp.join(cfg.data_dir, cfg.test_set))
 make_folder(cfg.model_dir)
 make_folder(cfg.vis_dir)
 make_folder(cfg.log_dir)
