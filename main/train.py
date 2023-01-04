@@ -4,12 +4,14 @@ import torch
 import torch.backends.cudnn as cudnn
 from base import Trainer
 from config import cfg
+from tqdm import tqdm
 
 
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--gpu", type=str, dest="gpu_ids")
     parser.add_argument("--continue", dest="continue_train", action="store_true")
+    parser.add_argument("--log_steps", default=100, type=int)
     args = parser.parse_args()
 
     if not args.gpu_ids:
@@ -40,7 +42,9 @@ def main():
         trainer.set_lr(epoch)
         trainer.tot_timer.tic()
         trainer.read_timer.tic()
-        for itr, (inputs, targets, meta_info) in enumerate(trainer.batch_generator):
+        for itr, (inputs, targets, meta_info) in tqdm(
+            enumerate(trainer.batch_generator), desc=f"Epoch {epoch}/{cfg.end_epoch}:"
+        ):
             trainer.read_timer.toc()
             trainer.gpu_timer.tic()
 
@@ -65,7 +69,9 @@ def main():
                 "%.2fh/epoch" % (trainer.tot_timer.average_time / 3600.0 * trainer.itr_per_epoch),
             ]
             screen += ["%s: %.4f" % ("loss_" + k, v.detach()) for k, v in loss.items()]
-            trainer.logger.info(" ".join(screen))
+
+            if itr % args.log_steps == 0 or itr == len(trainer.batch_generator) - 1:
+                trainer.logger.info(" ".join(screen))
 
             trainer.tot_timer.toc()
             trainer.tot_timer.tic()
