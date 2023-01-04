@@ -4,5 +4,6 @@ torchvision==0.10.1
 einops
 chumpy
 opencv-python
+pycocotools
 pyrender
 tqdm

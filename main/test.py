@@ -1,4 +1,8 @@
 import argparse
+import sys
+import os.path as osp
+sys.path.insert(0, osp.join("..", "main"))
+sys.path.insert(0, osp.join("..", "common"))
 
 import numpy as np
 import torch
