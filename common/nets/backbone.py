@@ -7,11 +7,11 @@ from torchvision import ops
 
 
 class FPN(nn.Module):
-    def __init__(self, pretrained=True):
+    def __init__(self, pretrained=False):
         super(FPN, self).__init__()
         self.in_planes = 64
 
-        resnet = resnet50(pretrained=pretrained)
+        resnet = resnet50(pretrained=False)
 
         self.toplayer = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)  # Reduce channels
 
@@ -40,7 +40,7 @@ class FPN(nn.Module):
         _, _, H, W = y.size()
         return F.interpolate(x, size=(H, W), mode="bilinear", align_corners=False) + y
 
-    def forward(self, x):
+    def forward(self, x, pointnet_feats):
         # Bottom-up
         c1 = self.layer0(x)
         c2 = self.layer1(c1)

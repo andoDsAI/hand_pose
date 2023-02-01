@@ -26,7 +26,7 @@ class Config:
         end_epoch = 25
         lr = 1e-4
         lr_dec_factor = 0.9
-    train_batch_size = 16  # per GPU
+    train_batch_size = 4  # per GPU
     lambda_mano_verts = 1e4
     lambda_mano_joints = 1e4
     lambda_mano_pose = 10
@@ -38,7 +38,7 @@ class Config:
     test_batch_size = 64
 
     # others
-    num_thread = 20
+    num_thread = 4
     gpu_ids = "0"
     num_gpus = 1
     continue_train = False

@@ -100,14 +100,15 @@ def augmentation(img, bbox, data_split, do_flip=False):
     img, trans, inv_trans = generate_patch_image(
         img, bbox, scale, rot, do_flip, cfg.input_img_shape
     )
-
+    # print('color scale and image ',  color_scale[None, None, :].shape, img)
     img = np.clip(img * color_scale[None, None, :], 0, 255)
     return img, trans, inv_trans, rot, scale
 
 
 def generate_patch_image(cvimg, bbox, scale, rot, do_flip, out_shape):
     img = cvimg.copy()
-    img_height, img_width, img_channels = img.shape
+    # print(img.shape)
+    img_height, img_width, img_channels = img.shape 
 
     bb_c_x = float(bbox[0] + 0.5 * bbox[2])
     bb_c_y = float(bbox[1] + 0.5 * bbox[3])

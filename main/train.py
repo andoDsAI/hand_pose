@@ -1,5 +1,8 @@
 import argparse
-
+import sys
+import os.path as osp
+sys.path.insert(0, osp.join("..", "main"))
+sys.path.insert(0, osp.join("..", "common"))
 import torch
 import torch.backends.cudnn as cudnn
 from base import Trainer
@@ -45,6 +48,7 @@ def main():
         for itr, (inputs, targets, meta_info) in tqdm(
             enumerate(trainer.batch_generator), desc=f"Epoch {epoch}/{cfg.end_epoch}:"
         ):
+            # print('> Input shape', inputs['img'].size())
             trainer.read_timer.toc()
             trainer.gpu_timer.tic()
 
@@ -86,7 +90,13 @@ def main():
                 },
                 epoch + 1,
             )
+        # break
 
 
 if __name__ == "__main__":
+    # rand_arr = torch.rand(1, 3, 256, 256)
+
+    # conv1 = torch.nn.Conv1d(3, 64, 1)
+    # print(rand_arr.view((1, 3, 256*256)).shape)
     main()
+    

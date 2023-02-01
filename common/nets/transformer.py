@@ -25,7 +25,6 @@ class Transformer(nn.Module):
             self.conv2 = nn.Sequential(
                 nn.Conv2d(dim * 2, dim, 1, padding=0),
             )
-
     def forward(self, query, key):
         output = query
         for i, layer in enumerate(self.layers):
