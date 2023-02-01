@@ -2,8 +2,6 @@ import os
 import os.path as osp
 import sys
 
-import numpy as np
-
 
 class Config:
 
@@ -23,7 +21,7 @@ class Config:
         lr_dec_factor = 0.7
     elif train_set == "DEX_YCB":
         lr_dec_epoch = [i for i in range(1, 25)]
-        end_epoch = 25
+        end_epoch = 40
         lr = 1e-4
         lr_dec_factor = 0.9
     train_batch_size = 4  # per GPU
@@ -35,7 +33,7 @@ class Config:
     ckpt_freq = 10
 
     # testing config
-    test_batch_size = 64
+    test_batch_size = 8
 
     # others
     num_thread = 4
@@ -65,11 +63,11 @@ class Config:
 cfg = Config()
 
 sys.path.insert(0, osp.join(cfg.root_dir, "common"))
-from utils.dir import add_pypath, make_folder
+from utils.dir import add_path, make_folder
 
-add_pypath(osp.join(cfg.data_dir))
-add_pypath(osp.join(cfg.data_dir, cfg.train_set))
-add_pypath(osp.join(cfg.data_dir, cfg.test_set))
+add_path(osp.join(cfg.data_dir))
+add_path(osp.join(cfg.data_dir, cfg.train_set))
+add_path(osp.join(cfg.data_dir, cfg.test_set))
 make_folder(cfg.model_dir)
 make_folder(cfg.vis_dir)
 make_folder(cfg.log_dir)

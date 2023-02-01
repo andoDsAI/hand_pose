@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LOCAL_CODE=/home/cghg/andq/hand-pose/
+LOCAL_CODE=/home/cghg/andq/hand_pose/
 IMAGE_CODE=/usr/src/app/
 
 LOCAL_DATA=/media/local-data/andq/data/DEX_YCB/data/

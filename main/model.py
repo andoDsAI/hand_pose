@@ -1,13 +1,12 @@
-import math
-
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
+
 from config import cfg
 from nets.backbone import FPN
 from nets.regressor import Regressor
 from nets.transformer import Transformer
 from nets.pointnet import PointNetfeat
-from torch.nn import functional as F
 from utils.mano import MANO
 
 

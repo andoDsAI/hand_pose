@@ -105,7 +105,7 @@ class PointNetfeat(nn.Module):
     def forward(self, x):
         # print('>>>> In pointnet, x shape is', x.shape)
         batch_size, channels, height, width = x.size()
-        x = x.view((batch_size, channels, height*width))
+        x = x.view((batch_size, channels, height * width))
         n_pts = x.size()[2]
         trans = self.stn(x)
         x = x.transpose(2, 1)

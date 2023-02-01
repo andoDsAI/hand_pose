@@ -57,71 +57,70 @@ class DEX_YCB(torch.utils.data.Dataset):
             ann = db.anns[aid]
             image_id = ann["image_id"]
             img = db.loadImgs(image_id)[0]
-            if '20200709-subject-01/20200709_141754/836212060125' in img["file_name"]:
-                img_path = osp.join(self.root_dir, img["file_name"])
-                depth_img_path = img_path.replace("color_", "aligned_depth_to_color_").replace(".jpg", ".png")
-                img_shape = (img["height"], img["width"])
-                if self.data_split == "train":
-                    joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
-                    cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
-                    joints_coord_img = np.array(ann["joints_img"], dtype=np.float32)
-                    hand_type = ann["hand_type"]
+            img_path = osp.join(self.root_dir, img["file_name"])
+            depth_img_path = img_path.replace("color_", "aligned_depth_to_color_").replace(".jpg", ".png")
+            img_shape = (img["height"], img["width"])
+            if self.data_split == "train":
+                joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
+                cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
+                joints_coord_img = np.array(ann["joints_img"], dtype=np.float32)
+                hand_type = ann["hand_type"]
 
-                    bbox = get_bbox(
-                        joints_coord_img[:, :2],
-                        np.ones_like(joints_coord_img[:, 0]),
-                        expansion_factor=1.5,
-                    )
-                    bbox = process_bbox(bbox, img["width"], img["height"], expansion_factor=1.0)
+                bbox = get_bbox(
+                    joints_coord_img[:, :2],
+                    np.ones_like(joints_coord_img[:, 0]),
+                    expansion_factor=1.5,
+                )
+                bbox = process_bbox(bbox, img["width"], img["height"], expansion_factor=1.0)
 
-                    if bbox is None:
-                        continue
+                if bbox is None:
+                    continue
 
-                    mano_pose = np.array(ann["mano_param"]["pose"], dtype=np.float32)
-                    mano_shape = np.array(ann["mano_param"]["shape"], dtype=np.float32)
+                mano_pose = np.array(ann["mano_param"]["pose"], dtype=np.float32)
+                mano_shape = np.array(ann["mano_param"]["shape"], dtype=np.float32)
 
-                    data = {
-                        "img_path": img_path,
-                        "depth_img_path": depth_img_path,
-                        "img_shape": img_shape,
-                        "joints_coord_cam": joints_coord_cam,
-                        "joints_coord_img": joints_coord_img,
-                        "bbox": bbox,
-                        "cam_param": cam_param,
-                        "mano_pose": mano_pose,
-                        "mano_shape": mano_shape,
-                        "hand_type": hand_type,
-                    }
-                else:
-                    joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)
-                    root_joint_cam = copy.deepcopy(joints_coord_cam[0])
-                    joints_coord_img = np.array(ann["joints_img"], dtype=np.float32)
-                    hand_type = ann["hand_type"]
+                data = {
+                    "img_path": img_path,
+                    "depth_img_path": depth_img_path,
+                    "img_shape": img_shape,
+                    "joints_coord_cam": joints_coord_cam,
+                    "joints_coord_img": joints_coord_img,
+                    "bbox": bbox,
+                    "cam_param": cam_param,
+                    "mano_pose": mano_pose,
+                    "mano_shape": mano_shape,
+                    "hand_type": hand_type,
+                }
+            else:
+                joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)
+                root_joint_cam = copy.deepcopy(joints_coord_cam[0])
+                joints_coord_img = np.array(ann["joints_img"], dtype=np.float32)
+                hand_type = ann["hand_type"]
 
-                    bbox = get_bbox(
-                        joints_coord_img[:, :2],
-                        np.ones_like(joints_coord_img[:, 0]),
-                        expansion_factor=1.5,
-                    )
-                    bbox = process_bbox(bbox, img["width"], img["height"], expansion_factor=1.0)
-                    if bbox is None:
-                        bbox = np.array([0, 0, img["width"] - 1, img["height"] - 1], dtype=np.float32)
+                bbox = get_bbox(
+                    joints_coord_img[:, :2],
+                    np.ones_like(joints_coord_img[:, 0]),
+                    expansion_factor=1.5,
+                )
+                bbox = process_bbox(bbox, img["width"], img["height"], expansion_factor=1.0)
+                if bbox is None:
+                    bbox = np.array([0, 0, img["width"] - 1, img["height"] - 1], dtype=np.float32)
 
-                    cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
+                cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
 
-                    data = {
-                        "img_path": img_path,
-                        "depth_img_path": depth_img_path,
-                        "img_shape": img_shape,
-                        "joints_coord_cam": joints_coord_cam,
-                        "root_joint_cam": root_joint_cam,
-                        "bbox": bbox,
-                        "cam_param": cam_param,
-                        "image_id": image_id,
-                        "hand_type": hand_type,
-                    }
+                data = {
+                    "img_path": img_path,
+                    "depth_img_path": depth_img_path,
+                    "img_shape": img_shape,
+                    "joints_coord_cam": joints_coord_cam,
+                    "root_joint_cam": root_joint_cam,
+                    "bbox": bbox,
+                    "cam_param": cam_param,
+                    "image_id": image_id,
+                    "hand_type": hand_type,
+                }
 
-                data_list.append(data)
+            data_list.append(data)
         return data_list
 
     def __len__(self):

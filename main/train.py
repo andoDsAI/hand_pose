@@ -1,12 +1,9 @@
 import argparse
-import sys
-import os.path as osp
-sys.path.insert(0, osp.join("..", "main"))
-sys.path.insert(0, osp.join("..", "common"))
 import torch
 import torch.backends.cudnn as cudnn
-from base import Trainer
+
 from config import cfg
+from base import Trainer
 from tqdm import tqdm
 
 
@@ -94,9 +91,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # rand_arr = torch.rand(1, 3, 256, 256)
-
-    # conv1 = torch.nn.Conv1d(3, 64, 1)
-    # print(rand_arr.view((1, 3, 256*256)).shape)
     main()
-    
