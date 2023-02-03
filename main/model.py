@@ -26,8 +26,8 @@ class Model(nn.Module):
         # # primary, secondary feats # Chưa cho ảnh depth vào
         p_feats, s_feats = self.backbone(inputs["img"], pointnet_feats)
         # print(f"pointnet_feats = {pointnet_feats.shape}")
-        s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
-        s_feats = F.relu(self.conv1(s_feats))
+        p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
+        p_feats = F.relu(self.conv1(p_feats))
         # print(f"s_feats = {s_feats.shape}, p_feats = {p_feats.shape}")
         # # p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
         # # print(">>>>>>>", torch.cat([s_feats, pointnet_feats], dim=1).size())
