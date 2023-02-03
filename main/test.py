@@ -1,10 +1,9 @@
 import argparse
-
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from base import Tester
+
 from config import cfg
+from base import Tester
 from tqdm import tqdm
 
 
