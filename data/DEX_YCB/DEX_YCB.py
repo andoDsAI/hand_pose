@@ -202,7 +202,7 @@ class DEX_YCB(torch.utils.data.Dataset):
             mano_pose[self.root_joint_idx] = root_pose.reshape(3)
             mano_pose = mano_pose.reshape(-1)
 
-            inputs = {"img": img, "depth_img": depth_img}
+            inputs = {"img": img}
             targets = {
                 "joints_img": joints_img,
                 "joints_coord_cam": joints_coord_cam,
@@ -213,7 +213,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         else:
             root_joint_cam = data["root_joint_cam"]
-            inputs = {"img": img, "depth_img": depth_img}
+            inputs = {"img": img}
             targets = {}
             meta_info = {"root_joint_cam": root_joint_cam}
 
