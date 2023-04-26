@@ -2,11 +2,8 @@ import os
 import os.path as osp
 import sys
 
-import numpy as np
-
 
 class Config:
-
     # dataset
     # HO3D, DEX_YCB
     train_set = "DEX_YCB"
@@ -32,7 +29,7 @@ class Config:
     lambda_mano_pose = 10
     lambda_mano_shape = 0.1
     lambda_joints_img = 100
-    ckpt_freq = 10
+    checkpoint_freq = 10
 
     # testing config
     test_batch_size = 8
@@ -65,11 +62,11 @@ class Config:
 cfg = Config()
 
 sys.path.insert(0, osp.join(cfg.root_dir, "common"))
-from utils.dir import add_pypath, make_folder
+from utils.dir import add_path, make_folder
 
-add_pypath(osp.join(cfg.data_dir))
-add_pypath(osp.join(cfg.data_dir, cfg.train_set))
-add_pypath(osp.join(cfg.data_dir, cfg.test_set))
+add_path(osp.join(cfg.data_dir))
+add_path(osp.join(cfg.data_dir, cfg.train_set))
+add_path(osp.join(cfg.data_dir, cfg.test_set))
 make_folder(cfg.model_dir)
 make_folder(cfg.vis_dir)
 make_folder(cfg.log_dir)

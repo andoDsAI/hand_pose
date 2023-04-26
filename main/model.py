@@ -1,12 +1,11 @@
-import math
-
 import torch
 import torch.nn as nn
+from torch.nn import functional as F
+
 from config import cfg
 from nets.backbone import FPN
 from nets.regressor import Regressor
 from nets.transformer import Transformer
-from torch.nn import functional as F
 from utils.mano import MANO
 
 
@@ -19,7 +18,8 @@ class Model(nn.Module):
         self.regressor = regressor
 
     def forward(self, inputs, targets, meta_info, mode):
-        p_feats, s_feats = self.backbone(inputs["img"])  # primary, secondary feats
+        # primary, secondary feats
+        p_feats, s_feats = self.backbone(inputs["img"])
         feats = self.FIT(s_feats, p_feats)
         feats = self.SET(feats, feats)
 
@@ -85,5 +85,4 @@ def get_model(mode):
         regressor.apply(init_weights)
 
     model = Model(backbone, FIT, SET, regressor)
-
     return model

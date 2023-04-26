@@ -1,14 +1,10 @@
 import argparse
-import sys
-import os.path as osp
-sys.path.insert(0, osp.join("..", "main"))
-sys.path.insert(0, osp.join("..", "common"))
 
-import numpy as np
 import torch
 import torch.backends.cudnn as cudnn
-from base import Tester
+
 from config import cfg
+from base import Tester
 from tqdm import tqdm
 
 
@@ -32,7 +28,6 @@ def parse_args():
 
 
 def main():
-
     args = parse_args()
     cfg.set_args(args.gpu_ids)
     cudnn.benchmark = True
@@ -44,7 +39,6 @@ def main():
     eval_result = {}
     cur_sample_idx = 0
     for itr, (inputs, targets, meta_info) in enumerate(tqdm(tester.batch_generator)):
-
         # forward
         with torch.no_grad():
             out = tester.model(inputs, targets, meta_info, "test")
