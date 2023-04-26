@@ -28,7 +28,6 @@ def parse_args():
 
 
 def main():
-
     args = parse_args()
     cfg.set_args(args.gpu_ids)
     cudnn.benchmark = True
@@ -40,7 +39,6 @@ def main():
     eval_result = {}
     cur_sample_idx = 0
     for itr, (inputs, targets, meta_info) in enumerate(tqdm(tester.batch_generator)):
-
         # forward
         with torch.no_grad():
             out = tester.model(inputs, targets, meta_info, "test")

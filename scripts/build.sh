@@ -1,3 +1,3 @@
 #!/bin/bash
-
-nvidia-docker build -t andq_training -f Dockerfile .
+set -exu
+docker build --tag local/oru-dgx -f Dockerfile ../
