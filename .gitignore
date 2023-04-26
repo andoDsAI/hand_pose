@@ -12,6 +12,7 @@ __pycache__/
 *.jpg
 *.out
 output
+output2
 data/*/data
 
 
