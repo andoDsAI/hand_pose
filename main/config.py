@@ -4,7 +4,6 @@ import sys
 
 
 class Config:
-
     # dataset
     # HO3D, DEX_YCB
     train_set = "DEX_YCB"
@@ -30,7 +29,7 @@ class Config:
     lambda_mano_pose = 10
     lambda_mano_shape = 0.1
     lambda_joints_img = 100
-    ckpt_freq = 10
+    checkpoint_freq = 10
 
     # testing config
     test_batch_size = 8
