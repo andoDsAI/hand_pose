@@ -8,8 +8,8 @@ import random
 import cv2
 import numpy as np
 import torch
-from config import cfg
 from pycocotools.coco import COCO
+from config import cfg
 from utils.mano import MANO
 from utils.preprocessing import (
     augmentation,
