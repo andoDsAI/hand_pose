@@ -6,7 +6,7 @@ from config import cfg
 from nets.backbone import FPN
 from nets.regressor import Regressor
 from nets.transformer import Transformer
-from nets.pointnet import PointNetfeat
+from nets.pointnet import PointNetFeat
 from utils.mano import MANO
 
 
@@ -14,7 +14,7 @@ class Model(nn.Module):
     def __init__(self, backbone, FIT, SET, regressor):
         super(Model, self).__init__()
         self.backbone = backbone
-        self.pointnet = PointNetfeat(global_feat=False)
+        self.pointnet = PointNetFeat(global_feat=False)
         self.FIT = FIT
         self.SET = SET
         self.conv1 = nn.Conv2d(1280, 256, 1)
@@ -22,17 +22,15 @@ class Model(nn.Module):
 
     def forward(self, inputs, targets, meta_info, mode):
         pointnet_feats, _, _ = self.pointnet(inputs["depth_img"])
-        # # primary, secondary feats # Chưa cho ảnh depth vào
+        # # primary, secondary feats
         p_feats, s_feats = self.backbone(inputs["img"], pointnet_feats)
-        # print(f"pointnet_feats = {pointnet_feats.shape}")
+        # concat depth features to secondary features
         s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
         s_feats = F.relu(self.conv1(s_feats))
-
+		# concat depth features to primary features
         p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
         p_feats = F.relu(self.conv1(p_feats))
-        # print(f"s_feats = {s_feats.shape}, p_feats = {p_feats.shape}")
-        # # p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
-        # # print(">>>>>>>", torch.cat([s_feats, pointnet_feats], dim=1).size())
+
         feats = self.FIT(s_feats, p_feats)
         feats = self.SET(feats, feats)
 
@@ -98,5 +96,4 @@ def get_model(mode):
         regressor.apply(init_weights)
 
     model = Model(backbone, FIT, SET, regressor)
-
     return model

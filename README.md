@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This repository is the offical [Pytorch](https://pytorch.org/) implementation of **[HandOccNet: Occlusion-Robust 3D Hand Mesh Estimation Network (CVPR 2022)](https://arxiv.org/abs/2203.14564)**. Below is the overall pipeline of HandOccNet.
+This repository is the official [Pytorch](https://pytorch.org/) implementation of **[HandOccNet: Occlusion-Robust 3D Hand Mesh Estimation Network (CVPR 2022)](https://arxiv.org/abs/2203.14564)**. Below is the overall pipeline of HandOccNet.
 ![overall pipeline](./asset/model.png)
 
 ## Directory
@@ -42,7 +42,7 @@ ${ROOT}
 |   |   |   |   |--DEX_YCB_s0_test_data.json
 ```
 
-* Download DexYCB data and annotation files <[data](https://dex-ycb.github.io/)>[[annotation files](https://drive.google.com/drive/folders/1pmRpgv38PXvlLOODtoxpTYnIpYTkNV6b?usp=sharing)]
+* Download DexYCB data and annotation files <[data](https://dex-ycb.github.io/)><[annotation files](https://drive.google.com/drive/folders/1pmRpgv38PXvlLOODtoxpTYnIpYTkNV6b?usp=sharing)>
 
 ### Pytorch MANO layer
 
@@ -96,11 +96,3 @@ python test.py --gpu 0-3 --test_epoch {test epoch}
 ```  
 
 `--gpu 0,1,2,3` can be used instead of `--gpu 0-3`.
-
-## Acknowledgements
-
-For this project, we relied on research codes from:
-
-* [I2L-MeshNet_RELEASE](https://github.com/mks0601/I2L-MeshNet_RELEASE)
-* [Semi-Hand-Object](https://github.com/stevenlsw/Semi-Hand-Object)
-* [attention-module](https://github.com/Jongchan/attention-module)

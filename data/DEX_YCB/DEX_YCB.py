@@ -139,7 +139,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         # img
         img = load_img(img_path)
-        orig_img = copy.deepcopy(img)[:, :, ::-1] # Conver image from BGR to RGB channel
+        orig_img = copy.deepcopy(img)[:, :, ::-1] # Convert image from BGR to RGB channel
         img, img2bb_trans, bb2img_trans, rot, scale = augmentation(
             img, bbox, self.data_split, do_flip=do_flip
         )
