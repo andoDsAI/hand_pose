@@ -1,5 +1,5 @@
 #!/bin/bash
-LOCAL_USER=dhg
+LOCAL_USER=local
 LOCAL_IMAGE=oru-dgx
 LOCAL_TAG=latest
 
