@@ -28,7 +28,6 @@ def parse_args():
 
 
 def main():
-
     args = parse_args()
     cfg.set_args(args.gpu_ids)
     cudnn.benchmark = True

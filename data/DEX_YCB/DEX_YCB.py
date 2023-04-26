@@ -58,7 +58,6 @@ class DEX_YCB(torch.utils.data.Dataset):
             image_id = ann["image_id"]
             img = db.loadImgs(image_id)[0]
             img_path = osp.join(self.root_dir, img["file_name"])
-            depth_img_path = "aligned_depth_to_" + img_path.replace(".jpg", ".png")
             img_shape = (img["height"], img["width"])
             if self.data_split == "train":
                 joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
@@ -81,7 +80,6 @@ class DEX_YCB(torch.utils.data.Dataset):
 
                 data = {
                     "img_path": img_path,
-                    "depth_img_path": depth_img_path,
                     "img_shape": img_shape,
                     "joints_coord_cam": joints_coord_cam,
                     "joints_coord_img": joints_coord_img,
@@ -110,7 +108,6 @@ class DEX_YCB(torch.utils.data.Dataset):
 
                 data = {
                     "img_path": img_path,
-                    "depth_img_path": depth_img_path,
                     "img_shape": img_shape,
                     "joints_coord_cam": joints_coord_cam,
                     "root_joint_cam": root_joint_cam,
@@ -128,9 +125,8 @@ class DEX_YCB(torch.utils.data.Dataset):
 
     def __getitem__(self, idx):
         data = copy.deepcopy(self.data_list[idx])
-        img_path, depth_img_path, img_shape, bbox = (
+        img_path, img_shape, bbox = (
             data["img_path"],
-            data["depth_img_path"],
             data["img_shape"],
             data["bbox"],
         )
@@ -144,14 +140,6 @@ class DEX_YCB(torch.utils.data.Dataset):
             img, bbox, self.data_split, do_flip=do_flip
         )
         img = self.transform(img.astype(np.float32)) / 255.0
-
-        # depth image
-        depth_img = load_img(depth_img_path, order="GRAY")
-        orig_depth_img = copy.deepcopy(depth_img)[:, :, ::-1]
-        depth_img, depth_img2bb_trans, bb2depth_trans, rot, scale = augmentation(
-            depth_img, bbox, self.data_split, do_flip=do_flip
-        )
-        depth_img = self.transform(depth_img.astype(np.float32)) / 255.0
 
         if self.data_split == "train":
             # 2D joint coordinate
@@ -202,7 +190,7 @@ class DEX_YCB(torch.utils.data.Dataset):
             mano_pose[self.root_joint_idx] = root_pose.reshape(3)
             mano_pose = mano_pose.reshape(-1)
 
-            inputs = {"img": img, "depth_img": depth_img}
+            inputs = {"img": img}
             targets = {
                 "joints_img": joints_img,
                 "joints_coord_cam": joints_coord_cam,
@@ -213,7 +201,7 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         else:
             root_joint_cam = data["root_joint_cam"]
-            inputs = {"img": img, "depth_img": depth_img}
+            inputs = {"img": img}
             targets = {}
             meta_info = {"root_joint_cam": root_joint_cam}
 

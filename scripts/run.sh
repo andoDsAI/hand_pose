@@ -12,4 +12,4 @@ nvidia-docker run --gpus all \
 	-p 8888:8888 \
 	-v $LOCAL_CODE:$IMAGE_CODE \
 	-v $LOCAL_DATA:$IMAGE_DATA \
-	andq_training bash
+	local/oru-dgx bash

@@ -1,5 +1,4 @@
 import argparse
-
 import torch
 import torch.backends.cudnn as cudnn
 
@@ -39,7 +38,6 @@ def main():
 
     # train
     for epoch in range(trainer.start_epoch, cfg.end_epoch):
-
         trainer.set_lr(epoch)
         trainer.tot_timer.tic()
         trainer.read_timer.tic()
@@ -78,7 +76,7 @@ def main():
             trainer.tot_timer.tic()
             trainer.read_timer.tic()
 
-        if (epoch + 1) % cfg.ckpt_freq == 0 or epoch + 1 == cfg.end_epoch:
+        if (epoch + 1) % cfg.checkpoint_freq == 0 or epoch + 1 == cfg.end_epoch:
             trainer.save_model(
                 {
                     "epoch": epoch,
