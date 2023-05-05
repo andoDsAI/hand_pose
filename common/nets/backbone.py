@@ -40,7 +40,7 @@ class FPN(nn.Module):
         _, _, H, W = y.size()
         return F.interpolate(x, size=(H, W), mode="bilinear", align_corners=False) + y
 
-    def forward(self, x, pointnet_feats):
+    def forward(self, x):
         # Bottom-up
         c1 = self.layer0(x)
         c2 = self.layer1(c1)

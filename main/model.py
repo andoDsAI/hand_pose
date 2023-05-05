@@ -21,9 +21,11 @@ class Model(nn.Module):
         self.regressor = regressor
 
     def forward(self, inputs, targets, meta_info, mode):
+        # primary, secondary feats
+        p_feats, s_feats = self.backbone(inputs["img"])
+        
+        # depth features
         pointnet_feats, _, _ = self.pointnet(inputs["depth_img"])
-        # # primary, secondary feats
-        p_feats, s_feats = self.backbone(inputs["img"], pointnet_feats)
         # concat depth features to secondary features
         s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
         s_feats = F.relu(self.conv1(s_feats))

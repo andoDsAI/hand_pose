@@ -44,7 +44,7 @@ class Config:
     cur_dir = osp.dirname(os.path.abspath(__file__))
     root_dir = osp.join(cur_dir, "..")
     data_dir = osp.join(root_dir, "data")
-    output_dir = osp.join(root_dir, "output2")
+    output_dir = osp.join(root_dir, "output")
     model_dir = osp.join(output_dir, "model_dump")
     vis_dir = osp.join(output_dir, "vis")
     log_dir = osp.join(output_dir, "log")
