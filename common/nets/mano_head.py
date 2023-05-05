@@ -197,9 +197,9 @@ def mat2aa(rotation_matrix):
     return aa
 
 
-class mano_regHead(nn.Module):
+class ManoRegHead(nn.Module):
     def __init__(self, mano_layer=mano.layer, feature_size=1024, mano_neurons=[1024, 512]):
-        super(mano_regHead, self).__init__()
+        super(ManoRegHead, self).__init__()
 
         # 6D representation of rotation matrix
         self.pose6d_size = 16 * 6

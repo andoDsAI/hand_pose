@@ -1,9 +1,8 @@
-import math
 import random
 
 import cv2
 import numpy as np
-import torchvision
+
 from config import cfg
 
 
@@ -23,7 +22,6 @@ def load_img(path, order="RGB"):
 
 
 def get_bbox(joint_img, joint_valid, expansion_factor=1.0):
-
     x_img, y_img = joint_img[:, 0], joint_img[:, 1]
     x_img = x_img[joint_valid == 1]
     y_img = y_img[joint_valid == 1]

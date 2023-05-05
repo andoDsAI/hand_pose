@@ -1,13 +1,11 @@
-import json
-import os.path as osp
+import os
 import sys
 
 import numpy as np
 import torch
-from config import cfg
 
+from config import cfg
 sys.path.insert(0, cfg.mano_path)
-import manopth
 from manopth.manolayer import ManoLayer
 
 
@@ -40,7 +38,7 @@ class MANO(object):
             "Pinky_1",
             "Pinky_2",
             "Pinky_3",
-            "Pinly_4",
+            "Pinky_4",
         )
         self.skeleton = (
             (0, 1),
@@ -102,7 +100,7 @@ class MANO(object):
     def get_layer(self):
         # load right hand MANO model
         return ManoLayer(
-            mano_root=osp.join(cfg.mano_path, "mano", "models"),
+            mano_root=os.path.join(cfg.mano_path, "mano", "models"),
             flat_hand_mean=False,
             use_pca=False,
             side="right",

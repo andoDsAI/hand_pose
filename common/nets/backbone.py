@@ -2,19 +2,20 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.model_zoo as model_zoo
+
 from nets.cbam import SpatialGate
-from torchvision import ops
 
 
 class FPN(nn.Module):
-    def __init__(self, pretrained=False):
+    def __init__(self, pretrained=True):
         super(FPN, self).__init__()
         self.in_planes = 64
+        resnet = resnet50(pretrained=pretrained)
 
-        resnet = resnet50(pretrained=False)
-
+		# Top layer
         self.toplayer = nn.Conv2d(2048, 256, kernel_size=1, stride=1, padding=0)  # Reduce channels
 
+		# Bottom-up layers
         self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.leakyrelu, resnet.maxpool)
         self.layer1 = nn.Sequential(resnet.layer1)
         self.layer2 = nn.Sequential(resnet.layer2)
@@ -34,6 +35,7 @@ class FPN(nn.Module):
         # Attention Module
         self.attention_module = SpatialGate()
 
+		# Pooling
         self.pool = nn.AvgPool2d(2, stride=2)
 
     def _upsample_add(self, x, y):
@@ -47,11 +49,13 @@ class FPN(nn.Module):
         c3 = self.layer2(c2)
         c4 = self.layer3(c3)
         c5 = self.layer4(c4)
+
         # Top-down
         p5 = self.toplayer(c5)
         p4 = self._upsample_add(p5, self.latlayer1(c4))
         p3 = self._upsample_add(p4, self.latlayer2(c3))
         p2 = self._upsample_add(p3, self.latlayer3(c2))
+
         # Smooth
         # p4 = self.smooth1(p4)
         p3 = self.smooth2(p3)

@@ -1,6 +1,4 @@
 import numpy as np
-import torch
-from config import cfg
 
 
 def cam2pixel(cam_coord, f, c):

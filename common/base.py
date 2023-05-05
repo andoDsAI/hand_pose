@@ -2,28 +2,25 @@ import abc
 import glob
 import math
 import os
-import os.path as osp
-import time
 
-import torch.optim
+import torch
 import torchvision.transforms as transforms
+from torch.nn.parallel.data_parallel import DataParallel
+from torch.utils.data import DataLoader
+
 from config import cfg
 from logger import ColorLogger
 from model import get_model
 from timer import Timer
-from torch.nn.parallel.data_parallel import DataParallel
-from torch.utils.data import DataLoader
 
-# dynamic dataset import
+
+# import dataset class
 exec("from " + cfg.train_set + " import " + cfg.train_set)
 exec("from " + cfg.test_set + " import " + cfg.test_set)
 
 
-class Base(object):
-    __metaclass__ = abc.ABCMeta
-
+class Base(metaclass=abc.ABCMeta):
     def __init__(self, log_name="logs.txt"):
-
         self.cur_epoch = 0
 
         # timer
@@ -36,11 +33,11 @@ class Base(object):
 
     @abc.abstractmethod
     def _make_batch_generator(self):
-        return
+        pass
 
     @abc.abstractmethod
     def _make_model(self):
-        return
+        pass
 
 
 class Trainer(Base):
@@ -53,25 +50,25 @@ class Trainer(Base):
         return optimizer
 
     def save_model(self, state, epoch):
-        file_path = osp.join(cfg.model_dir, "snapshot_{}.pth.tar".format(str(epoch)))
+        file_path = os.path.join(cfg.model_dir, "snapshot_{}.pth.tar".format(str(epoch)))
         torch.save(state, file_path)
         self.logger.info("Write snapshot into {}".format(file_path))
 
     def load_model(self, model, optimizer):
-        model_file_list = glob.glob(osp.join(cfg.model_dir, "*.pth.tar"))
+        model_file_list = glob.glob(os.path.join(cfg.model_dir, "*.pth.tar"))
         cur_epoch = max(
             [
-                int(file_name[file_name.find("snapshot_") + 9 : file_name.find(".pth.tar")])
+                int(file_name[file_name.find("snapshot_") + 9: file_name.find(".pth.tar")])
                 for file_name in model_file_list
             ]
         )
-        ckpt_path = osp.join(cfg.model_dir, "snapshot_" + str(cur_epoch) + ".pth.tar")
-        ckpt = torch.load(ckpt_path)
-        start_epoch = ckpt["epoch"] + 1
-        model.load_state_dict(ckpt["network"], strict=False)
-        # optimizer.load_state_dict(ckpt['optimizer'])
+        checkpoint_path = os.path.join(cfg.model_dir, "snapshot_" + str(cur_epoch) + ".pth.tar")
+        checkpoint = torch.load(checkpoint_path)
+        start_epoch = checkpoint["epoch"] + 1
+        model.load_state_dict(checkpoint["network"], strict=False)
+        # optimizer.load_state_dict(checkpoint['optimizer'])
 
-        self.logger.info("Load checkpoint from {}".format(ckpt_path))
+        self.logger.info("Load checkpoint from {}".format(checkpoint_path))
         return start_epoch, model, optimizer
 
     def set_lr(self, epoch):
@@ -121,6 +118,10 @@ class Trainer(Base):
         self.start_epoch = start_epoch
         self.model = model
         self.optimizer = optimizer
+    
+    def initialize(self):
+        self._make_batch_generator()
+        self._make_model()
 
 
 class Tester(Base):

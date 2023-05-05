@@ -88,8 +88,8 @@ def init_weights(m):
 
 def get_model(mode):
     backbone = FPN(pretrained=True)
-    FIT = Transformer(injection=True)  # feature injecting transformer
-    SET = Transformer(injection=False)  # self enhancing transformer
+    FIT = Transformer(injection=True)	# feature injecting transformer
+    SET = Transformer(injection=False)	# self enhancing transformer
     regressor = Regressor()
 
     if mode == "train":

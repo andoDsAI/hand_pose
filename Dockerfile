@@ -5,7 +5,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends screen libgl1-m
 
 # Install python dependencies
 COPY requirements.txt .
-RUN python -m pip install --upgrade pip && pip3 install -r requirements.txt
+RUN python3 -m pip install --upgrade pip && pip3 install -r requirements.txt
 
 # Create working directory in image container
 RUN mkdir -p /usr/src/app

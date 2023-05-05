@@ -2,6 +2,7 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
+from accelerate import Accelerator
 
 from config import cfg
 from base import Trainer
@@ -32,10 +33,14 @@ def main():
     args = parse_args()
     cfg.set_args(args.gpu_ids, args.continue_train)
     cudnn.benchmark = True
+    
+    # HuggingFace Accelerator
+    accelerator = Accelerator()
 
     trainer = Trainer()
-    trainer._make_batch_generator()
-    trainer._make_model()
+    trainer.initialize()
+    
+    model, optimizer, train_loader = accelerator.prepare(trainer.model, trainer.optimizer, trainer.batch_generator)
 
     # train
     for epoch in range(trainer.start_epoch, cfg.end_epoch):
@@ -45,7 +50,6 @@ def main():
         for itr, (inputs, targets, meta_info) in tqdm(
             enumerate(trainer.batch_generator), desc=f"Epoch {epoch}/{cfg.end_epoch}:"
         ):
-            # print('> Input shape', inputs['img'].size())
             trainer.read_timer.toc()
             trainer.gpu_timer.tic()
 
@@ -87,7 +91,6 @@ def main():
                 },
                 epoch + 1,
             )
-        # break
 
 
 if __name__ == "__main__":

@@ -1,13 +1,11 @@
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from einops import repeat
 
 
 class Transformer(nn.Module):
     def __init__(self, inp_res=32, dim=256, depth=2, num_heads=4, mlp_ratio=4.0, injection=True):
         super().__init__()
-
         self.injection = injection
 
         self.layers = nn.ModuleList([])
@@ -25,6 +23,7 @@ class Transformer(nn.Module):
             self.conv2 = nn.Sequential(
                 nn.Conv2d(dim * 2, dim, 1, padding=0),
             )
+
     def forward(self, query, key):
         output = query
         for i, layer in enumerate(self.layers):
@@ -44,10 +43,12 @@ class MLP(nn.Module):
         super().__init__()
         out_features = out_features or in_features
         hidden_features = hidden_features or in_features
+    
         self.fc1 = nn.Linear(in_features, hidden_features)
         self.act = act_layer()
         self.fc2 = nn.Linear(hidden_features, out_features)
         self.drop = nn.Dropout(drop)
+
         self._init_weights()
 
     def forward(self, x):
@@ -94,19 +95,9 @@ class Attention(nn.Module):
 
 
 class Block(nn.Module):
-    def __init__(
-        self,
-        dim,
-        num_heads,
-        mlp_ratio=4.0,
-        act_layer=nn.GELU,
-        norm_layer=nn.LayerNorm,
-        injection=True,
-    ):
+    def __init__(self, dim, num_heads, mlp_ratio=4.0, act_layer=nn.GELU, norm_layer=nn.LayerNorm, injection=True):
         super().__init__()
-
         self.injection = injection
-
         self.channels = dim
 
         self.encode_value = nn.Conv2d(

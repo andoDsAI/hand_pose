@@ -1,38 +1,21 @@
 import copy
-import json
-import math
 import os
-import os.path as osp
-import random
 
 import cv2
 import numpy as np
 import torch
-from config import cfg
 from pycocotools.coco import COCO
+
+from config import cfg
 from utils.mano import MANO
 from utils.preprocessing import (
     augmentation,
-    generate_patch_image,
     get_bbox,
     load_img,
     process_bbox,
 )
-from utils.transforms import (
-    cam2pixel,
-    pixel2cam,
-    rigid_align,
-    transform_joint_to_other_db,
-    world2cam,
-)
-from utils.vis import (
-    render_mesh,
-    save_obj,
-    vis_3d_skeleton,
-    vis_keypoints,
-    vis_keypoints_with_skeleton,
-    vis_mesh,
-)
+from utils.transforms import rigid_align
+
 
 mano = MANO()
 
@@ -41,8 +24,8 @@ class DEX_YCB(torch.utils.data.Dataset):
     def __init__(self, transform, data_split):
         self.transform = transform
         self.data_split = data_split if data_split == "train" else "test"
-        self.root_dir = osp.join("..", "data", "DEX_YCB", "data")
-        self.annot_path = osp.join(self.root_dir, "annotations")
+        self.root_dir = os.path.join("..", "data", "DEX_YCB", "data")
+        self.annotations_path = os.path.join(self.root_dir, "annotations")
         self.root_joint_idx = 0
 
         self.data_list = self.load_data()
@@ -50,14 +33,14 @@ class DEX_YCB(torch.utils.data.Dataset):
             self.eval_result = [[], []]  # [mpjpe_list, pa-mpjpe_list]
 
     def load_data(self):
-        db = COCO(osp.join(self.annot_path, "DEX_YCB_s0_{}_data.json".format(self.data_split)))
+        db = COCO(os.path.join(self.annotations_path, "DEX_YCB_s0_{}_data.json".format(self.data_split)))
 
         data_list = []
         for aid in db.anns.keys():
             ann = db.anns[aid]
             image_id = ann["image_id"]
             img = db.loadImgs(image_id)[0]
-            img_path = osp.join(self.root_dir, img["file_name"])
+            img_path = os.path.join(self.root_dir, img["file_name"])
             depth_img_path = img_path.replace("color_", "aligned_depth_to_color_").replace(".jpg", ".png")
             img_shape = (img["height"], img["width"])
             if self.data_split == "train":
@@ -220,28 +203,26 @@ class DEX_YCB(torch.utils.data.Dataset):
         return inputs, targets, meta_info
 
     def evaluate(self, outs, cur_sample_idx):
-        annots = self.data_list
+        annotations = self.data_list
         sample_num = len(outs)
         for n in range(sample_num):
-            annot = annots[cur_sample_idx + n]
-
+            annotation = annotations[cur_sample_idx + n]
             out = outs[n]
-
             joints_out = out["joints_coord_cam"]
 
             # root centered
             joints_out -= joints_out[self.root_joint_idx]
 
             # flip back to left hand
-            if annot["hand_type"] == "left":
+            if annotation["hand_type"] == "left":
                 joints_out[:, 0] *= -1
 
             # root align
-            gt_root_joint_cam = annot["root_joint_cam"]
+            gt_root_joint_cam = annotation["root_joint_cam"]
             joints_out += gt_root_joint_cam
 
             # GT and rigid align
-            joints_gt = annot["joints_coord_cam"]
+            joints_gt = annotation["joints_coord_cam"]
             joints_out_aligned = rigid_align(joints_out, joints_gt)
 
             # m to mm
@@ -260,10 +241,10 @@ class DEX_YCB(torch.utils.data.Dataset):
 
     """
     def evaluate(self, outs, cur_sample_idx):
-        annots = self.data_list
+        annotations = self.data_list
         sample_num = len(outs)
         for n in range(sample_num):
-            annot = annots[cur_sample_idx + n]
+            annotation = annotations[cur_sample_idx + n]
             out = outs[n]
             verts_out = out['mesh_coord_cam']
             joints_out = out['joints_coord_cam']
@@ -272,11 +253,11 @@ class DEX_YCB(torch.utils.data.Dataset):
             joints_out -= joints_out[self.root_joint_idx]
 
             # flip back to left hand
-            if annot['hand_type'] == 'left':
+            if annotation['hand_type'] == 'left':
                 verts_out[:,0] *= -1
                 joints_out[:,0] *= -1
             # root align
-            gt_root_joint_cam = annot['root_joint_cam']
+            gt_root_joint_cam = annotation['root_joint_cam']
             verts_out += gt_root_joint_cam
             joints_out += gt_root_joint_cam
 
@@ -288,7 +269,7 @@ class DEX_YCB(torch.utils.data.Dataset):
             self.eval_result[1].append(verts_out)
 
     def print_eval_result(self, test_epoch):
-        output_file_path = osp.join(cfg.result_dir, "DEX_RESULTS_EPOCH{}.txt".format(test_epoch))
+        output_file_path = os.path.join(cfg.result_dir, "DEX_RESULTS_EPOCH{}.txt".format(test_epoch))
 
         with open(output_file_path, 'w') as output_file:
             for i, pred_joints in enumerate(self.eval_result[0]):

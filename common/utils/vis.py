@@ -20,7 +20,7 @@ def vis_keypoints_with_skeleton(img, kps, kps_lines, kp_thresh=0.4, alpha=1):
     # Perform the drawing on a copy of the image, to allow for blending.
     kp_mask = np.copy(img)
 
-    # Draw the keypoints.
+    # Draw the key points.
     for l in range(len(kps_lines)):
         i1 = kps_lines[l][0]
         i2 = kps_lines[l][1]
@@ -33,7 +33,7 @@ def vis_keypoints_with_skeleton(img, kps, kps_lines, kp_thresh=0.4, alpha=1):
         if kps[2, i2] > kp_thresh:
             cv2.circle(kp_mask, p2, radius=3, color=colors[l], thickness=-1, lineType=cv2.LINE_AA)
 
-    # Blend the keypoints.
+    # Blend the key points.
     return cv2.addWeighted(img, 1.0 - alpha, kp_mask, alpha, 0)
 
 
@@ -46,12 +46,12 @@ def vis_keypoints(img, kps, alpha=1):
     # Perform the drawing on a copy of the image, to allow for blending.
     kp_mask = np.copy(img)
 
-    # Draw the keypoints.
+    # Draw the key points.
     for i in range(len(kps)):
         p = kps[i][0].astype(np.int32), kps[i][1].astype(np.int32)
         cv2.circle(kp_mask, p, radius=3, color=colors[i], thickness=-1, lineType=cv2.LINE_AA)
 
-    # Blend the keypoints.
+    # Blend the key points.
     return cv2.addWeighted(img, 1.0 - alpha, kp_mask, alpha, 0)
 
 
@@ -69,12 +69,11 @@ def vis_mesh(img, mesh_vertex, alpha=0.5):
         p = mesh_vertex[i][0].astype(np.int32), mesh_vertex[i][1].astype(np.int32)
         cv2.circle(mask, p, radius=1, color=colors[i], thickness=-1, lineType=cv2.LINE_AA)
 
-    # Blend the keypoints.
+    # Blend the key points.
     return cv2.addWeighted(img, 1.0 - alpha, mask, alpha, 0)
 
 
 def vis_3d_skeleton(kpt_3d, kpt_3d_vis, kps_lines, filename=None):
-
     fig = plt.figure()
     ax = fig.add_subplot(111, projection="3d")
 
@@ -109,7 +108,6 @@ def vis_3d_skeleton(kpt_3d, kpt_3d_vis, kps_lines, filename=None):
 
     # plt.show()
     # cv2.waitKey(0)
-
     plt.savefig(filename)
 
 

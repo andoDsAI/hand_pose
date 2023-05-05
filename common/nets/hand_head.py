@@ -3,14 +3,14 @@ import torch.nn.functional as F
 from torch import nn
 
 
-class hand_regHead(nn.Module):
+class HandRegHead(nn.Module):
     def __init__(self, roi_res=32, joint_nb=21, stacks=1, channels=256, blocks=1):
         """
         Args:
             inr_res: input image size
             joint_nb: hand joint num
         """
-        super(hand_regHead, self).__init__()
+        super(HandRegHead, self).__init__()
 
         # hand head
         self.out_res = roi_res
@@ -255,7 +255,7 @@ class Hourglass(nn.Module):
         return self._hour_glass_forward(self.depth, x)
 
 
-class hand_Encoder(nn.Module):
+class HandEncoder(nn.Module):
     def __init__(
         self,
         num_heatmap_chan=21,
@@ -264,7 +264,7 @@ class hand_Encoder(nn.Module):
         nRegBlock=4,
         nRegModules=2,
     ):
-        super(hand_Encoder, self).__init__()
+        super(HandEncoder, self).__init__()
 
         self.num_heatmap_chan = num_heatmap_chan
         self.num_feat_chan = num_feat_chan
