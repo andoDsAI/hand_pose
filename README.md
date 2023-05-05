@@ -1,9 +1,6 @@
-# HandOccNet
+# Hand pose estimation using Transformer and PointNet
 
 ## Introduction
-
-This repository is the official [Pytorch](https://pytorch.org/) implementation of **[HandOccNet: Occlusion-Robust 3D Hand Mesh Estimation Network (CVPR 2022)](https://arxiv.org/abs/2203.14564)**. Below is the overall pipeline of HandOccNet.
-![overall pipeline](./asset/model.png)
 
 ## Directory
 
@@ -22,7 +19,7 @@ ${ROOT}
 
 * `data` contains data loading codes and soft links to images and annotations directories.  
 * `demo` contains demo codes.
-* `common` contains kernel codes for HandOccNet.  
+* `common` contains kernel codes for repo.  
 * `main` contains high-level codes for training or testing the network.  
 * `output` contains log, trained models, visualized outputs, and test result.  
 
@@ -80,10 +77,8 @@ ${ROOT}
 In the `main` folder, set train_set in `config.py` (as 'DEX_YCB') and run  
 
 ```bash  
-python train.py --gpu 0-3
-```  
-
-to train on the GPU 0,1,2,3. `--gpu 0,1,2,3` can be used instead of `--gpu 0-3`.
+python train.py
+```
 
 ### Test  
 
@@ -92,7 +87,5 @@ Place trained model at the `output/model_dump/`.
 In the `main` folder, set test_set in `config.py` (as 'DEX_YCB') and run  
 
 ```bash  
-python test.py --gpu 0-3 --test_epoch {test epoch}  
+python test.py --test_epoch {test epoch}  
 ```  
-
-`--gpu 0,1,2,3` can be used instead of `--gpu 0-3`.

@@ -1,6 +1,6 @@
 numpy
-torch
-torchvision
+torch==1.9.1
+torchvision==0.10.1
 accelerate
 gsutil
 einops
@@ -9,3 +9,4 @@ opencv-python
 pycocotools
 pyrender
 tqdm
+deepspeed

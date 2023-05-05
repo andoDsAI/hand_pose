@@ -48,13 +48,17 @@ class Trainer(Base):
         model_params = filter(lambda p: p.requires_grad, model.parameters())
         optimizer = torch.optim.Adam(model_params, lr=cfg.lr)
         return optimizer
+    
+    def get_scheduler(self, optimizer):
+        lr_scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=cfg.epochs, gamma=cfg.lr_dec_factor)
+        return lr_scheduler
 
     def save_model(self, state, epoch):
         file_path = os.path.join(cfg.model_dir, "snapshot_{}.pth.tar".format(str(epoch)))
         torch.save(state, file_path)
         self.logger.info("Write snapshot into {}".format(file_path))
 
-    def load_model(self, model, optimizer):
+    def load_model(self, model, optimizer, lr_scheduler):
         model_file_list = glob.glob(os.path.join(cfg.model_dir, "*.pth.tar"))
         cur_epoch = max(
             [
@@ -66,39 +70,22 @@ class Trainer(Base):
         checkpoint = torch.load(checkpoint_path)
         start_epoch = checkpoint["epoch"] + 1
         model.load_state_dict(checkpoint["network"], strict=False)
-        # optimizer.load_state_dict(checkpoint['optimizer'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
+        lr_scheduler.load_state_dict(checkpoint['lr_scheduler'])
 
         self.logger.info("Load checkpoint from {}".format(checkpoint_path))
-        return start_epoch, model, optimizer
-
-    def set_lr(self, epoch):
-        for e in cfg.lr_dec_epoch:
-            if epoch < e:
-                break
-        if epoch < cfg.lr_dec_epoch[-1]:
-            idx = cfg.lr_dec_epoch.index(e)
-            for g in self.optimizer.param_groups:
-                g["lr"] = cfg.lr * (cfg.lr_dec_factor**idx)
-        else:
-            for g in self.optimizer.param_groups:
-                g["lr"] = cfg.lr * (cfg.lr_dec_factor ** len(cfg.lr_dec_epoch))
-
-    def get_lr(self):
-        for g in self.optimizer.param_groups:
-            cur_lr = g["lr"]
-        return cur_lr
+        return start_epoch, model, optimizer, lr_scheduler
 
     def _make_batch_generator(self):
         # data load and construct batch generator
         self.logger.info("Creating dataset...")
         train_dataset = eval(cfg.train_set)(transforms.ToTensor(), "train")
-
-        self.itr_per_epoch = math.ceil(len(train_dataset) / cfg.num_gpus / cfg.train_batch_size)
-        self.batch_generator = DataLoader(
+        self.itr_per_epoch = math.ceil(len(train_dataset) / cfg.train_batch_size / cfg.gradient_accumulation_steps)
+        self.dataloader = DataLoader(
             dataset=train_dataset,
-            batch_size=cfg.num_gpus * cfg.train_batch_size,
-            shuffle=True,
+            batch_size=cfg.train_batch_size,
             num_workers=cfg.num_thread,
+            shuffle=True,
             pin_memory=True,
         )
 
@@ -106,18 +93,17 @@ class Trainer(Base):
         # prepare network
         self.logger.info("Creating graph and optimizer...")
         model = get_model("train")
-
-        model = DataParallel(model).cuda()
         optimizer = self.get_optimizer(model)
+        lr_scheduler = self.get_scheduler(optimizer)
         if cfg.continue_train:
-            start_epoch, model, optimizer = self.load_model(model, optimizer)
+            start_epoch, model, optimizer, lr_scheduler = self.load_model(model, optimizer, lr_scheduler)
         else:
             start_epoch = 0
-        model.train()
 
         self.start_epoch = start_epoch
         self.model = model
         self.optimizer = optimizer
+        self.lr_scheduler = lr_scheduler
     
     def initialize(self):
         self._make_batch_generator()
@@ -130,14 +116,13 @@ class Tester(Base):
         super(Tester, self).__init__(log_name="test_logs.txt")
 
     def _make_batch_generator(self):
-        # data load and construct batch generator
         self.logger.info("Creating dataset...")
         self.test_dataset = eval(cfg.test_set)(transforms.ToTensor(), "test")
-        self.batch_generator = DataLoader(
+        self.dataloader = DataLoader(
             dataset=self.test_dataset,
-            batch_size=cfg.num_gpus * cfg.test_batch_size,
-            shuffle=False,
+            batch_size=cfg.test_batch_size,
             num_workers=cfg.num_thread,
+            shuffle=False,
             pin_memory=True,
         )
 
@@ -149,12 +134,13 @@ class Tester(Base):
         # prepare network
         self.logger.info("Creating graph...")
         model = get_model("test")
-        model = DataParallel(model).cuda()
-        ckpt = torch.load(model_path)
-        model.load_state_dict(ckpt["network"], strict=False)
-        model.eval()
-
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint["network"], strict=False)
         self.model = model
+        
+    def initialize(self):
+        self._make_batch_generator()
+        self._make_model()
 
     def _evaluate(self, outs, cur_sample_idx):
         eval_result = self.test_dataset.evaluate(outs, cur_sample_idx)

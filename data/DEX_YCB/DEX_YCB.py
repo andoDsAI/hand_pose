@@ -3,7 +3,8 @@ import os
 
 import cv2
 import numpy as np
-import torch
+
+from torch.utils.data import Dataset
 from pycocotools.coco import COCO
 
 from config import cfg
@@ -20,7 +21,7 @@ from utils.transforms import rigid_align
 mano = MANO()
 
 
-class DEX_YCB(torch.utils.data.Dataset):
+class DEX_YCB(Dataset):
     def __init__(self, transform, data_split):
         self.transform = transform
         self.data_split = data_split if data_split == "train" else "test"
@@ -34,7 +35,6 @@ class DEX_YCB(torch.utils.data.Dataset):
 
     def load_data(self):
         db = COCO(os.path.join(self.annotations_path, "DEX_YCB_s0_{}_data.json".format(self.data_split)))
-
         data_list = []
         for aid in db.anns.keys():
             ann = db.anns[aid]
@@ -185,7 +185,10 @@ class DEX_YCB(torch.utils.data.Dataset):
             mano_pose[self.root_joint_idx] = root_pose.reshape(3)
             mano_pose = mano_pose.reshape(-1)
 
-            inputs = {"img": img}
+            inputs = {
+                "img": img,
+                "depth_img": depth_img
+            }
             targets = {
                 "joints_img": joints_img,
                 "joints_coord_cam": joints_coord_cam,
@@ -196,7 +199,10 @@ class DEX_YCB(torch.utils.data.Dataset):
 
         else:
             root_joint_cam = data["root_joint_cam"]
-            inputs = {"img": img}
+            inputs = {
+                "img": img,
+                "depth_img": depth_img
+            }
             targets = {}
             meta_info = {"root_joint_cam": root_joint_cam}
 
@@ -236,43 +242,6 @@ class DEX_YCB(torch.utils.data.Dataset):
             )
 
     def print_eval_result(self, test_epoch):
+        print("Epoch %d evaluation result:" % test_epoch)
         print("MPJPE : %.2f mm" % np.mean(self.eval_result[0]))
         print("PA MPJPE : %.2f mm" % np.mean(self.eval_result[1]))
-
-    """
-    def evaluate(self, outs, cur_sample_idx):
-        annotations = self.data_list
-        sample_num = len(outs)
-        for n in range(sample_num):
-            annotation = annotations[cur_sample_idx + n]
-            out = outs[n]
-            verts_out = out['mesh_coord_cam']
-            joints_out = out['joints_coord_cam']
-            # root centered
-            verts_out -= joints_out[self.root_joint_idx]
-            joints_out -= joints_out[self.root_joint_idx]
-
-            # flip back to left hand
-            if annotation['hand_type'] == 'left':
-                verts_out[:,0] *= -1
-                joints_out[:,0] *= -1
-            # root align
-            gt_root_joint_cam = annotation['root_joint_cam']
-            verts_out += gt_root_joint_cam
-            joints_out += gt_root_joint_cam
-
-            # m to mm
-            verts_out *= 1000
-            joints_out *= 1000
-
-            self.eval_result[0].append(joints_out)
-            self.eval_result[1].append(verts_out)
-
-    def print_eval_result(self, test_epoch):
-        output_file_path = os.path.join(cfg.result_dir, "DEX_RESULTS_EPOCH{}.txt".format(test_epoch))
-
-        with open(output_file_path, 'w') as output_file:
-            for i, pred_joints in enumerate(self.eval_result[0]):
-                image_id = self.data_list[i]['image_id']
-                output_file.write(str(image_id) + ',' + ','.join(pred_joints.ravel().astype(str).tolist()) + '\n')
-    """
