@@ -66,7 +66,7 @@ class Trainer(Base):
         checkpoint = torch.load(checkpoint_path)
         start_epoch = checkpoint["epoch"] + 1
         model.load_state_dict(checkpoint["network"], strict=False)
-        # optimizer.load_state_dict(checkpoint['optimizer'])
+        optimizer.load_state_dict(checkpoint['optimizer'])
 
         self.logger.info("Load checkpoint from {}".format(checkpoint_path))
         return start_epoch, model, optimizer
@@ -94,7 +94,7 @@ class Trainer(Base):
         train_dataset = eval(cfg.train_set)(transforms.ToTensor(), "train")
 
         self.itr_per_epoch = math.ceil(len(train_dataset) / cfg.num_gpus / cfg.train_batch_size)
-        self.batch_generator = DataLoader(
+        self.dataloader = DataLoader(
             dataset=train_dataset,
             batch_size=cfg.num_gpus * cfg.train_batch_size,
             shuffle=True,
@@ -113,12 +113,11 @@ class Trainer(Base):
             start_epoch, model, optimizer = self.load_model(model, optimizer)
         else:
             start_epoch = 0
-        model.train()
 
         self.start_epoch = start_epoch
         self.model = model
         self.optimizer = optimizer
-    
+
     def initialize(self):
         self._make_batch_generator()
         self._make_model()
@@ -133,7 +132,7 @@ class Tester(Base):
         # data load and construct batch generator
         self.logger.info("Creating dataset...")
         self.test_dataset = eval(cfg.test_set)(transforms.ToTensor(), "test")
-        self.batch_generator = DataLoader(
+        self.dataloader = DataLoader(
             dataset=self.test_dataset,
             batch_size=cfg.num_gpus * cfg.test_batch_size,
             shuffle=False,
@@ -150,11 +149,14 @@ class Tester(Base):
         self.logger.info("Creating graph...")
         model = get_model("test")
         model = DataParallel(model).cuda()
-        ckpt = torch.load(model_path)
-        model.load_state_dict(ckpt["network"], strict=False)
-        model.eval()
+        checkpoint = torch.load(model_path)
+        model.load_state_dict(checkpoint["network"], strict=False)
 
         self.model = model
+
+    def initialize(self):
+        self._make_batch_generator()
+        self._make_model()
 
     def _evaluate(self, outs, cur_sample_idx):
         eval_result = self.test_dataset.evaluate(outs, cur_sample_idx)

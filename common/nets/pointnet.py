@@ -38,8 +38,7 @@ class STN3D(nn.Module):
         x = F.relu(self.bn5(self.fc2(x)))
         x = self.fc3(x)
 
-        iden = Variable(torch.from_numpy(np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).astype(np.float32))).view(
-            1, 9).repeat(batch_size, 1)
+        iden = Variable(torch.from_numpy(np.array([1, 0, 0, 0, 1, 0, 0, 0, 1]).astype(np.float32))).view(1, 9).repeat(batch_size, 1)
         if x.is_cuda:
             iden = iden.cuda()
 
@@ -80,8 +79,7 @@ class STNKd(nn.Module):
         x = F.relu(self.bn5(self.fc2(x)))
         x = self.fc3(x)
 
-        iden = Variable(torch.from_numpy(np.eye(self.k).flatten().astype(np.float32))).view(
-            1, self.k * self.k).repeat(batch_size, 1)
+        iden = Variable(torch.from_numpy(np.eye(self.k).flatten().astype(np.float32))).view(1, self.k * self.k).repeat(batch_size, 1)
         if x.is_cuda:
             iden = iden.cuda()
 

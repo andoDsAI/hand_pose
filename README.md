@@ -1,9 +1,6 @@
-# HandOccNet
+# Hand pose estimation using Transformer and PointNet
 
 ## Introduction
-
-This repository is the official [Pytorch](https://pytorch.org/) implementation of **[HandOccNet: Occlusion-Robust 3D Hand Mesh Estimation Network (CVPR 2022)](https://arxiv.org/abs/2203.14564)**. Below is the overall pipeline of HandOccNet.
-![overall pipeline](./asset/model.png)
 
 ## Directory
 
@@ -22,7 +19,7 @@ ${ROOT}
 
 * `data` contains data loading codes and soft links to images and annotations directories.  
 * `demo` contains demo codes.
-* `common` contains kernel codes for HandOccNet.  
+* `common` contains kernel codes for repo.  
 * `main` contains high-level codes for training or testing the network.  
 * `output` contains log, trained models, visualized outputs, and test result.  
 

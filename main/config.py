@@ -11,11 +11,12 @@ class Config:
 	input_img_shape = (256, 256)
 
 	# training config
-	lr_dec_epoch = [i for i in range(1, 25)]
-	end_epoch = 25
+	end_epoch = 40
+	epochs = [i for i in range(1, end_epoch)]
 	lr = 1e-4
 	lr_dec_factor = 0.9
 	train_batch_size = 4  # per GPU
+	gradient_accumulation_steps = 32
 	
 	# mano config
 	lambda_mano_verts = 1e4
@@ -31,7 +32,7 @@ class Config:
 	test_batch_size = 8
 
 	# others
-	num_thread = 20
+	num_thread = 12
 	gpu_ids = "0"
 	num_gpus = 1
 	continue_train = False
@@ -47,10 +48,11 @@ class Config:
 	result_dir = os.path.join(output_dir, "result")
 	mano_path = os.path.join(root_dir, "common", "utils", "manopth")
 
-	def set_args(self, gpu_ids, continue_train=False):
+	def set_args(self, gpu_ids, continue_train=False, gradient_accumulation_steps=32):
 		self.gpu_ids = gpu_ids
 		self.num_gpus = len(self.gpu_ids.split(","))
 		self.continue_train = continue_train
+		self.gradient_accumulation_steps = gradient_accumulation_steps
 		os.environ["CUDA_VISIBLE_DEVICES"] = self.gpu_ids
 		print(">>> Using GPU: {}".format(self.gpu_ids))
 

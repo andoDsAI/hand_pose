@@ -68,8 +68,19 @@ img, img2bb_trans, bb2img_trans = generate_patch_image(
 img = transform(img.astype(np.float32)) / 255
 img = img.cuda()[None, :, :, :]
 
+depth_img_path = "depth.png"
+depth_img = load_img(depth_img_path)
+depth_img, _, _ = generate_patch_image(
+    depth_img, bbox, 1.0, 0.0, False, cfg.input_img_shape
+)
+depth_img = transform(depth_img.astype(np.float32)) / 255
+depth_img = depth_img.cuda()[None, :, :, :]
+
 # forward
-inputs = {"img": img}
+inputs = {
+    "img": img,
+    "depth_img": depth_img
+}
 targets = {}
 meta_info = {}
 with torch.no_grad():
