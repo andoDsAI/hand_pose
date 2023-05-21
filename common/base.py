@@ -127,7 +127,7 @@ class Trainer(Base):
 		return eval_result
 
 	def _get_evaluate_result(self):
-		return self.train_dataset.get_evaluate_result()
+		return self.train_dataset.get_eval_result()
 
 
 class Tester(Base):

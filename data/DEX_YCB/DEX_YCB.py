@@ -20,7 +20,6 @@ from utils.transforms import rigid_align
 
 mano = MANO()
 
-
 class DEX_YCB(Dataset):
 	def __init__(self, transform, data_split):
 		self.transform = transform
@@ -30,7 +29,8 @@ class DEX_YCB(Dataset):
 		self.root_joint_idx = 0
 
 		self.data_list = self.load_data()
-		self.eval_result = [[], []]  # [mpjpe_list, pa-mpjpe_list]
+		if self.data_split != "train":
+			self.eval_result = [[], []]  # [mpjpe_list, pa-mpjpe_list]
 
 	def load_data(self):
 		db = COCO(os.path.join(self.annotations_path, "DEX_YCB_s0_{}_subset_data.json".format(self.data_split)))
@@ -44,7 +44,6 @@ class DEX_YCB(Dataset):
 			img_shape = (img["height"], img["width"])
 			if self.data_split == "train":
 				joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
-				root_joint_cam = copy.deepcopy(joints_coord_cam[0])
 				cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
 				joints_coord_img = np.array(ann["joints_img"], dtype=np.float32)
 				hand_type = ann["hand_type"]
@@ -68,7 +67,6 @@ class DEX_YCB(Dataset):
 					"img_shape": img_shape,
 					"joints_coord_cam": joints_coord_cam,
 					"joints_coord_img": joints_coord_img,
-					"root_joint_cam": root_joint_cam,
 					"bbox": bbox,
 					"cam_param": cam_param,
 					"mano_pose": mano_pose,
@@ -246,9 +244,3 @@ class DEX_YCB(Dataset):
 		print("Epoch %d evaluation result:" % test_epoch)
 		print("MPJPE : %.2f mm" % np.mean(self.eval_result[0]))
 		print("PA MPJPE : %.2f mm" % np.mean(self.eval_result[1]))
-  
-	def get_eval_result(self):
-		return {
-			"MPJPE": np.mean(self.eval_result[0]),
-			"PA_MPJPE": np.mean(self.eval_result[1]),
-		}

@@ -71,6 +71,7 @@ def main():
 		trainer.read_timer.tic()
 
 		tr_loss = 0.0
+		losses = {}
 		global_step = 0
 		for itr, batch in tqdm(enumerate(train_dataloader), desc=f"Epoch {epoch}/{cfg.end_epoch}:"):
 			with accelerator.accumulate(model):
@@ -87,6 +88,13 @@ def main():
 				# backward
 				sum_loss = sum(loss[k] for k in loss)
 				tr_loss += sum_loss.item()
+
+				if losses == {}:
+					losses = {k: v.detach() for k, v in loss.items()}
+				else:
+					for k, v in loss.items():
+						losses[k] += v.detach()
+
 				global_step += 1
 				accelerator.backward(sum_loss)
 				# if accelerator.sync_gradients:
@@ -126,32 +134,13 @@ def main():
 				epoch + 1,
 			)
 
-		model.eval()
-		cur_sample_idx = 0
-		for inputs, targets, meta_info in tqdm(train_dataloader, desc="Evaluation"):
-			# forward
-			with torch.no_grad():
-				out = model(inputs, targets, meta_info, "test")
-
-			# save output
-			out = {k: v.cpu().numpy() for k, v in out.items()}
-			for k, _ in out.items():
-				batch_size = out[k].shape[0]
-			out = [{k: v[bid] for k, v in out.items()} for bid in range(batch_size)]
-   
-			# evaluate
-			trainer._evaluate(out, cur_sample_idx)
-			cur_sample_idx += len(out)
-
-		eval_res = trainer._get_evaluate_result()
-		accelerator.log(
-			{
-	   			"epoch": epoch + 1,
-				"loss": tr_loss / global_step,
-				"MPJPE": eval_res["MPJPE"],
-				"PA_MPJPE": eval_res["PA_MPJPE"]
-		  	}
-   		)
+		log_result = {
+			"epoch": epoch + 1,
+			"total_loss": tr_loss / global_step
+		}
+		for k, v in losses.items():
+			log_result["loss_" + k] = v / global_step
+		accelerator.log(log_result, step=epoch)
 
 	accelerator.end_training()
 

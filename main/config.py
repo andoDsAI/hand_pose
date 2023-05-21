@@ -7,7 +7,7 @@ class Config:
 	train_set = "DEX_YCB"
 	test_set = "DEX_YCB"
  
-	architecture = "default"
+	architecture = "default-architecture"
 
 	## input, output shape
 	input_img_shape = (256, 256)
