@@ -24,14 +24,14 @@ class Model(nn.Module):
         # primary, secondary feats
         p_feats, s_feats = self.backbone(inputs["img"])
         
-        # depth features
-        pointnet_feats, _, _ = self.pointnet(inputs["depth_img"])
-        # concat depth features to secondary features
-        s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
-        s_feats = F.relu(self.conv1(s_feats))
-		# concat depth features to primary features
-        p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
-        p_feats = F.relu(self.conv1(p_feats))
+        # # depth features
+        # pointnet_feats, _, _ = self.pointnet(inputs["depth_img"])
+        # # concat depth features to secondary features
+        # s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
+        # s_feats = F.relu(self.conv1(s_feats))
+		# # concat depth features to primary features
+        # p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
+        # p_feats = F.relu(self.conv1(p_feats))
 
         feats = self.FIT(s_feats, p_feats)
         feats = self.SET(feats, feats)

@@ -1,7 +1,8 @@
 import argparse
 
+import torch
 import torch.backends.cudnn as cudnn
-from accelerate import Accelerator, set_seed
+from accelerate import Accelerator
 
 from config import cfg
 from base import Trainer
@@ -33,19 +34,34 @@ def parse_args():
 def main():
 	# argument parse and create log
 	args = parse_args()
-	set_seed(args.seed)
 	cfg.set_args(args.gpu_ids, args.continue_train, args.gradient_accumulation_steps)
 	cudnn.benchmark = True
 	
 	# huggingFace Accelerator
 	accelerator = Accelerator(
-		gradient_accumulation_steps=args.gradient_accumulation_steps
+		gradient_accumulation_steps=args.gradient_accumulation_steps,
+		log_with="wandb"
+	)
+ 
+	# wandb
+	accelerator.init_trackers(
+		project_name="hand-pose-estimation",
+		init_kwargs={"wandb": {"name": cfg.architecture}},
+		config={
+			"architecture": cfg.architecture,
+			"train_dataset": cfg.train_set,
+			"test_dataset": cfg.test_set,
+			"batch_size": cfg.train_batch_size,
+			"lr": cfg.lr,
+			"gradient_accumulation_steps": cfg.gradient_accumulation_steps,
+			"epochs": cfg.end_epoch,
+		}
 	)
 
 	trainer = Trainer()
 	trainer.initialize()
 	
-	model, optimizer, dataloader = accelerator.prepare(trainer.model, trainer.optimizer, trainer.dataloader)
+	model, optimizer, train_dataloader = accelerator.prepare(trainer.model, trainer.optimizer, trainer.train_dataloader)
 
 	# train
 	for epoch in range(trainer.start_epoch, cfg.end_epoch):
@@ -53,11 +69,14 @@ def main():
 		trainer.set_lr(epoch)
 		trainer.tot_timer.tic()
 		trainer.read_timer.tic()
-		for itr, batch in tqdm(enumerate(dataloader), desc=f"Epoch {epoch}/{cfg.end_epoch}:"):
+
+		tr_loss = 0.0
+		global_step = 0
+		for itr, batch in tqdm(enumerate(train_dataloader), desc=f"Epoch {epoch}/{cfg.end_epoch}:"):
 			with accelerator.accumulate(model):
 				trainer.read_timer.toc()
 				trainer.gpu_timer.tic()
-    
+	
 				# inputs
 				inputs, targets, meta_info = batch
 
@@ -67,9 +86,11 @@ def main():
 
 				# backward
 				sum_loss = sum(loss[k] for k in loss)
+				tr_loss += sum_loss.item()
+				global_step += 1
 				accelerator.backward(sum_loss)
-				if accelerator.sync_gradients:
-					accelerator.clip_grad_norm_(model.parameters(), args.max_grad_norm)
+				# if accelerator.sync_gradients:
+				# 	accelerator.clip_grad_norm_(model.parameters(), args.max_grad_norm)
 				optimizer.step()
 				optimizer.zero_grad()
 
@@ -88,7 +109,7 @@ def main():
 				]
 				screen += ["%s: %.4f" % ("loss_" + k, v.detach()) for k, v in loss.items()]
 
-				if itr % args.log_steps == 0 or itr == len(dataloader) - 1:
+				if itr % args.log_steps == 0 or itr == len(train_dataloader) - 1:
 					trainer.logger.info(" ".join(screen))
 
 				trainer.tot_timer.toc()
@@ -104,7 +125,34 @@ def main():
 				},
 				epoch + 1,
 			)
-	
+
+		model.eval()
+		cur_sample_idx = 0
+		for inputs, targets, meta_info in tqdm(train_dataloader, desc="Evaluation"):
+			# forward
+			with torch.no_grad():
+				out = model(inputs, targets, meta_info, "test")
+
+			# save output
+			out = {k: v.cpu().numpy() for k, v in out.items()}
+			for k, _ in out.items():
+				batch_size = out[k].shape[0]
+			out = [{k: v[bid] for k, v in out.items()} for bid in range(batch_size)]
+   
+			# evaluate
+			trainer._evaluate(out, cur_sample_idx)
+			cur_sample_idx += len(out)
+
+		eval_res = trainer._get_evaluate_result()
+		accelerator.log(
+			{
+	   			"epoch": epoch + 1,
+				"loss": tr_loss / global_step,
+				"MPJPE": eval_res["MPJPE"],
+				"PA_MPJPE": eval_res["PA_MPJPE"]
+		  	}
+   		)
+
 	accelerator.end_training()
 
 

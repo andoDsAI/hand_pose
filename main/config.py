@@ -6,13 +6,15 @@ class Config:
 	# dataset
 	train_set = "DEX_YCB"
 	test_set = "DEX_YCB"
+ 
+	architecture = "default"
 
 	## input, output shape
 	input_img_shape = (256, 256)
 
 	# training config
 	end_epoch = 40
-	epochs = [i for i in range(1, end_epoch)]
+	lr_dec_epoch = [i for i in range(1, end_epoch)]
 	lr = 1e-4
 	lr_dec_factor = 0.9
 	train_batch_size = 4  # per GPU

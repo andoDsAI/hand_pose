@@ -2,7 +2,7 @@ import argparse
 
 import torch
 import torch.backends.cudnn as cudnn
-from accelerate import Accelerator, set_seed
+from accelerate import Accelerator
 
 from config import cfg
 from base import Tester
@@ -32,7 +32,6 @@ def parse_args():
 def main():
 	# argument parse and create log
 	args = parse_args()
-	set_seed(args.seed)
 	cfg.set_args(args.gpu_ids)
 	cudnn.benchmark = True
 	
