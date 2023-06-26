@@ -1,11 +1,12 @@
 import argparse
 
 import torch
+import wandb
 import torch.backends.cudnn as cudnn
 from accelerate import Accelerator
 
 from config import cfg
-from base import Trainer
+from trainer import Trainer
 from tqdm import tqdm
 
 
@@ -13,7 +14,7 @@ def parse_args():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--gpu", type=str, dest="gpu_ids")
 	parser.add_argument("--continue", dest="continue_train", action="store_true")
-	parser.add_argument("--gradient_accumulation_steps", default=32, type=int, help="Gradient accumulation steps")
+	parser.add_argument("--gradient_accumulation_steps", default=16, type=int, help="Gradient accumulation steps")
 	parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
 	parser.add_argument("--seed", default=42, type=int, help="Seed.")
 	parser.add_argument("--log_steps", default=100, type=int)
@@ -42,26 +43,60 @@ def main():
 		gradient_accumulation_steps=args.gradient_accumulation_steps,
 		log_with="wandb"
 	)
+	
+	# trainer
+	trainer = Trainer()
+	trainer.compile()
+	model, optimizer, dataloader = accelerator.prepare(trainer.model, trainer.optimizer, trainer.dataloader)
  
 	# wandb
-	accelerator.init_trackers(
-		project_name="hand-pose-estimation",
-		init_kwargs={"wandb": {"name": cfg.architecture}},
-		config={
-			"architecture": cfg.architecture,
-			"train_dataset": cfg.train_set,
-			"test_dataset": cfg.test_set,
-			"batch_size": cfg.train_batch_size,
-			"lr": cfg.lr,
-			"gradient_accumulation_steps": cfg.gradient_accumulation_steps,
-			"epochs": cfg.end_epoch,
-		}
-	)
-
-	trainer = Trainer()
-	trainer.initialize()
+	if accelerator.is_main_process:
+		## If you want begin a new training, please use the following code
+		accelerator.init_trackers(
+			project_name="hand-pose-estimation",
+			init_kwargs={
+       			"wandb": {
+              		"name": cfg.architecture
+                }
+          	},
+			config={
+				"architecture": cfg.architecture,
+				"backend": cfg.backend,
+				"train_dataset": cfg.train_set,
+				"test_dataset": cfg.test_set,
+				"batch_size": cfg.train_batch_size,
+				"lr": cfg.lr,
+				"gradient_accumulation_steps": cfg.gradient_accumulation_steps,
+				"epochs": cfg.end_epoch,
+			}
+		)
+		## If you want to resume training, please uncomment the following code
+		# accelerator.init_trackers(
+		# 	project_name="hand-pose-estimation",
+		# 	init_kwargs={
+		# 		"wandb": {
+		# 			"name": cfg.architecture,
+		# 			"resume": "must",
+		# 			"id": "xy4ozpsp"
+		# 		}
+		# 	},
+		# 	config={
+		# 		"architecture": cfg.architecture,
+		# 		"train_dataset": cfg.train_set,
+		# 		"test_dataset": cfg.test_set,
+		# 		"batch_size": cfg.train_batch_size,
+		# 		"lr": cfg.lr,
+		# 		"gradient_accumulation_steps": cfg.gradient_accumulation_steps,
+		# 		"epochs": trainer.start_epoch
+		# 	}
+		# )
 	
-	model, optimizer, train_dataloader = accelerator.prepare(trainer.model, trainer.optimizer, trainer.train_dataloader)
+		# wandb.config.update(
+		# 	{
+		# 		"epochs": cfg.end_epoch
+		# 	},
+		# 	allow_val_change=True
+		# )
 
 	# train
 	for epoch in range(trainer.start_epoch, cfg.end_epoch):
@@ -73,7 +108,7 @@ def main():
 		tr_loss = 0.0
 		losses = {}
 		global_step = 0
-		for itr, batch in tqdm(enumerate(train_dataloader), desc=f"Epoch {epoch}/{cfg.end_epoch}:"):
+		for itr, batch in tqdm(enumerate(dataloader), desc=f"Epoch {epoch}/{cfg.end_epoch}:"):
 			with accelerator.accumulate(model):
 				trainer.read_timer.toc()
 				trainer.gpu_timer.tic()
@@ -117,7 +152,7 @@ def main():
 				]
 				screen += ["%s: %.4f" % ("loss_" + k, v.detach()) for k, v in loss.items()]
 
-				if itr % args.log_steps == 0 or itr == len(train_dataloader) - 1:
+				if itr % args.log_steps == 0 or itr == len(dataloader) - 1:
 					trainer.logger.info(" ".join(screen))
 
 				trainer.tot_timer.toc()
@@ -128,8 +163,8 @@ def main():
 			trainer.save_model(
 				{
 					"epoch": epoch,
-					"network": accelerator.get_state_dict(model),
-					"optimizer": accelerator.get_state_dict(optimizer)
+					"network": model.state_dict(),
+					"optimizer": optimizer.state_dict()
 				},
 				epoch + 1,
 			)

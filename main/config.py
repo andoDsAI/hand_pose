@@ -2,12 +2,15 @@ import os
 import sys
 
 
-class Config:
+class Config(object):
 	# dataset
 	train_set = "DEX_YCB"
 	test_set = "DEX_YCB"
  
 	architecture = "default-architecture"
+	backend = "resnet50"
+	use_full_data = True
+	use_depth_img = True
 
 	## input, output shape
 	input_img_shape = (256, 256)

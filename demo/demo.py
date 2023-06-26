@@ -9,7 +9,7 @@ import torchvision.transforms as transforms
 from torch.nn.parallel.data_parallel import DataParallel
 
 from config import cfg
-from model import get_model
+from nets.network import get_model
 from utils.mano import MANO
 from utils.preprocessing import generate_patch_image, load_img, process_bbox
 from utils.vis import save_obj

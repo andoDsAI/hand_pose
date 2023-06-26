@@ -2,48 +2,57 @@ import torch
 import torch.nn as nn
 from torch.nn import functional as F
 
+
 from config import cfg
-from nets.backbone import FPN
+from nets.fpn import FPN
 from nets.regressor import Regressor
 from nets.transformer import Transformer
 from nets.pointnet import PointNetFeat
-from utils.mano import MANO
 
 
-class Model(nn.Module):
-    def __init__(self, backbone, FIT, SET, regressor):
-        super(Model, self).__init__()
+class HandPoseNet(nn.Module):
+    def __init__(
+        self,
+        backbone: nn.Module = FPN(pretrained=True),
+        point_net: nn.Module = PointNetFeat(global_feat=False),
+        FIT: nn.Module = Transformer(injection=True),
+        SET: nn.Module = Transformer(injection=False),
+        regressor: nn.Module = Regressor()
+    ):
+        super(HandPoseNet, self).__init__()
         self.backbone = backbone
-        self.pointnet = PointNetFeat(global_feat=False)
+        self.pointnet = point_net
         self.FIT = FIT
         self.SET = SET
-        self.conv1 = nn.Conv2d(1280, 256, 1)
         self.regressor = regressor
-
+        self.conv1 = nn.Conv2d(1280, 256, 1)
+    
     def forward(self, inputs, targets, meta_info, mode):
-        # primary, secondary feats
+        # get primary, secondary features
         p_feats, s_feats = self.backbone(inputs["img"])
-        
-        # # depth features
-        # pointnet_feats, _, _ = self.pointnet(inputs["depth_img"])
-        # # concat depth features to secondary features
-        # s_feats = torch.cat([s_feats, pointnet_feats], dim=1)
-        # s_feats = F.relu(self.conv1(s_feats))
-		# # concat depth features to primary features
-        # p_feats = torch.cat([p_feats, pointnet_feats], dim=1)
+
+        # # get depth features
+        # depth_feats, _, _ = self.pointnet(inputs["depth_img"])
+
+        # # combine depth features to other features
+        # p_feats = torch.cat([p_feats, depth_feats], dim=1)  # concat depth features to primary features
         # p_feats = F.relu(self.conv1(p_feats))
 
+        # s_feats = torch.cat([s_feats, depth_feats], dim=1)  # concat depth features to secondary features
+        # s_feats = F.relu(self.conv1(s_feats))
+        
         feats = self.FIT(s_feats, p_feats)
         feats = self.SET(feats, feats)
-
+        
         if mode == "train":
             gt_mano_params = torch.cat([targets["mano_pose"], targets["mano_shape"]], dim=1)
         else:
             gt_mano_params = None
+
         pred_mano_results, gt_mano_results, preds_joints_img = self.regressor(
             feats, gt_mano_params
         )
-
+        
         if mode == "train":
             # loss functions
             loss = {}
@@ -63,9 +72,8 @@ class Model(nn.Module):
                 preds_joints_img[0], targets["joints_img"]
             )
             return loss
-
         else:
-            # test output
+            # predict output
             out = {}
             out["joints_coord_cam"] = pred_mano_results["joints3d"]
             out["mesh_coord_cam"] = pred_mano_results["verts3d"]
@@ -86,16 +94,18 @@ def init_weights(m):
         nn.init.constant_(m.bias, 0)
 
 
-def get_model(mode):
+def get_model(mode: str = "train") -> nn.Module:
     backbone = FPN(pretrained=True)
-    FIT = Transformer(injection=True)	# feature injecting transformer
-    SET = Transformer(injection=False)	# self enhancing transformer
+    point_net = PointNetFeat(global_feat=False, feature_transform=False)
+    FIT = Transformer(injection=True)   # feature injecting transformer
+    SET = Transformer(injection=False)  # self enhancing transformer
     regressor = Regressor()
-
+    
     if mode == "train":
+        point_net.apply(init_weights)
         FIT.apply(init_weights)
         SET.apply(init_weights)
         regressor.apply(init_weights)
-
-    model = Model(backbone, FIT, SET, regressor)
+    
+    model = HandPoseNet(backbone, point_net, FIT, SET, regressor)
     return model

@@ -216,12 +216,12 @@ def feature_transform_regularizer(trans):
     return loss
 
 
-if __name__ == '__main__':
-    sim_data = Variable(torch.rand(32, 3, 2500))
-    point_feats = PointNetFeat(global_feat=True)
-    out, _, _ = point_feats(sim_data)
-    print('global feat', out.size())
+# if __name__ == '__main__':
+#     sim_data = Variable(torch.rand(32, 3, 2500))
+#     point_feats = PointNetFeat(global_feat=True)
+#     out, _, _ = point_feats(sim_data)
+#     print('global feat', out.size())
 
-    point_feats = PointNetFeat(global_feat=False)
-    out, _, _ = point_feats(sim_data)
-    print('point feat', out.size())
+#     point_feats = PointNetFeat(global_feat=False)
+#     out, _, _ = point_feats(sim_data)
+#     print('point feat', out.size())
