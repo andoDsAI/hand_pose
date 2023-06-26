@@ -5,7 +5,7 @@ import torch.backends.cudnn as cudnn
 from accelerate import Accelerator
 
 from config import cfg
-from base import Tester
+from tester import Tester
 from tqdm import tqdm
 
 
@@ -39,7 +39,7 @@ def main():
 	accelerator = Accelerator()
 
 	tester = Tester(args.test_epoch)
-	tester.initialize()
+	tester.compile()
  
 	model, dataloader = accelerator.prepare(tester.model, tester.dataloader)
 

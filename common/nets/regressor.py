@@ -14,5 +14,4 @@ class Regressor(nn.Module):
         out_hm, encoding, preds_joints_img = self.hand_regHead(feats)
         mano_encoding = self.hand_encoder(out_hm, encoding)
         pred_mano_results, gt_mano_results = self.mano_regHead(mano_encoding, gt_mano_params)
-
         return pred_mano_results, gt_mano_results, preds_joints_img

@@ -10,7 +10,7 @@ annotations_path = os.path.join(root_dir, "annotations")
 data_path = os.path.join(annotations_path, "DEX_YCB_s0_{}_data.json")
 subset_data_path = os.path.join(annotations_path, "DEX_YCB_s0_{}_subset_data.json")
 
-def get_subset_data(data_type='train', split_ratio=0.01):
+def get_subset_data(data_type='train', split_ratio=0.1):
     input_path = data_path.format(data_type)
     output_path = subset_data_path.format(data_type)
 
@@ -63,5 +63,5 @@ def get_subset_data(data_type='train', split_ratio=0.01):
 
 
 if __name__ == "__main__":
-	get_subset_data(data_type='train', split_ratio=0.01)
-	get_subset_data(data_type='test', split_ratio=0.01)
+	get_subset_data(data_type='train', split_ratio=0.1)
+	get_subset_data(data_type='test', split_ratio=0.1)

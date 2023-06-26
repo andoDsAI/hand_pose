@@ -26,7 +26,7 @@ class Transformer(nn.Module):
 
     def forward(self, query, key):
         output = query
-        for i, layer in enumerate(self.layers):
+        for _, layer in enumerate(self.layers):
             output = layer(query=output, key=key)
 
         if self.injection:

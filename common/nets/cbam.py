@@ -31,6 +31,9 @@ class BasicConv(nn.Module):
 
 
 class Flatten(nn.Module):
+    def __init__(self):
+        super(Flatten, self).__init__()
+
     def forward(self, x):
         return x.view(x.size(0), -1)
 
@@ -81,6 +84,9 @@ def logsumexp_2d(tensor):
 
 
 class ChannelPool(nn.Module):
+    def __init__(self):
+        super(ChannelPool, self).__init__()
+
     def forward(self, x):
         return torch.cat((torch.max(x, 1)[0].unsqueeze(1), torch.mean(x, 1).unsqueeze(1)), dim=1)
 

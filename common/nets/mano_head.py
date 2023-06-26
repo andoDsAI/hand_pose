@@ -208,17 +208,18 @@ class ManoRegHead(nn.Module):
         # Base Regression Layers
         mano_base_neurons = [feature_size] + mano_neurons
         base_layers = []
-        for layer_idx, (inp_neurons, out_neurons) in enumerate(
+        for _, (inp_neurons, out_neurons) in enumerate(
             zip(mano_base_neurons[:-1], mano_base_neurons[1:])
         ):
             base_layers.append(nn.Linear(inp_neurons, out_neurons))
             base_layers.append(nn.LeakyReLU(inplace=True))
+
         self.mano_base_layer = nn.Sequential(*base_layers)
         # Pose layers
         self.pose_reg = nn.Linear(mano_base_neurons[-1], self.pose6d_size)
         # Shape layers
         self.shape_reg = nn.Linear(mano_base_neurons[-1], 10)
-
+		# Mano layer
         self.mano_layer = mano_layer
 
     def forward(self, features, gt_mano_params=None):

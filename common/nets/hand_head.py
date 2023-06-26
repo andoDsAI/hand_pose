@@ -1,6 +1,6 @@
 import torch
-import torch.nn.functional as F
 from torch import nn
+from torch.nn import functional as F
 
 
 class HandRegHead(nn.Module):
@@ -197,20 +197,17 @@ class Bottleneck(nn.Module):
             residual = self.skip(x)
 
         out += residual
-
         return out
 
 
 class Hourglass(nn.Module):
     def __init__(self, block, num_blocks, planes, depth):
-
         super(Hourglass, self).__init__()
         self.depth = depth
         self.block = block
         self.hg = self._make_hour_glass(block, num_blocks, planes, depth)
 
     def _make_residual(self, block, num_blocks, planes):
-
         layers = []
         for i in range(0, num_blocks):
             # channel changes: planes*block.expansion->planes->2*planes
@@ -307,5 +304,4 @@ class HandEncoder(nn.Module):
 
         # x: B x num_feat_chan x 2 x 2
         out = x.view(x.size(0), -1)
-
         return out

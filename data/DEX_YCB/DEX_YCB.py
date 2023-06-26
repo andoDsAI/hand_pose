@@ -27,13 +27,21 @@ class DEX_YCB(Dataset):
 		self.root_dir = os.path.join("..", "data", "DEX_YCB", "data")
 		self.annotations_path = os.path.join(self.root_dir, "annotations")
 		self.root_joint_idx = 0
+  
+		self.use_full_data = cfg.use_full_data
+		if self.use_full_data:
+			self.anno_file = "DEX_YCB_s0_{}.json"
+		else:
+			self.anno_file = "DEX_YCB_s0_{}_subset_data.json"
+
+		self.use_depth_img = cfg.use_depth_img
 
 		self.data_list = self.load_data()
 		if self.data_split != "train":
 			self.eval_result = [[], []]  # [mpjpe_list, pa-mpjpe_list]
 
 	def load_data(self):
-		db = COCO(os.path.join(self.annotations_path, "DEX_YCB_s0_{}_subset_data.json".format(self.data_split)))
+		db = COCO(os.path.join(self.annotations_path, self.anno_file.format(self.data_split)))
 		data_list = []
 		for aid in db.anns.keys():
 			ann = db.anns[aid]
@@ -42,6 +50,7 @@ class DEX_YCB(Dataset):
 			img_path = os.path.join(self.root_dir, img["file_name"])
 			depth_img_path = img_path.replace("color_", "aligned_depth_to_color_").replace(".jpg", ".png")
 			img_shape = (img["height"], img["width"])
+
 			if self.data_split == "train":
 				joints_coord_cam = np.array(ann["joints_coord_cam"], dtype=np.float32)  # meter
 				cam_param = {k: np.array(v, dtype=np.float32) for k, v in ann["cam_param"].items()}
@@ -119,21 +128,31 @@ class DEX_YCB(Dataset):
 		hand_type = data["hand_type"]
 		do_flip = hand_type == "left"
 
-		# img
+		# image
 		img = load_img(img_path)
-		orig_img = copy.deepcopy(img)[:, :, ::-1] # Convert image from BGR to RGB channel
-		img, img2bb_trans, bb2img_trans, rot, scale = augmentation(
+		# orig_img = copy.deepcopy(img)[:, :, ::-1]
+		img, img2bb_trans, _, rot, _ = augmentation(
 			img, bbox, self.data_split, do_flip=do_flip
 		)
 		img = self.transform(img.astype(np.float32)) / 255.0
 
-		# depth image
-		depth_img = load_img(depth_img_path)
-		# orig_depth_img = copy.deepcopy(depth_img)[:, :, ::-1]
-		depth_img, depth_img2bb_trans, bb2depth_trans, rot, scale = augmentation(
-			depth_img, bbox, self.data_split, do_flip=do_flip
-		)
-		depth_img = self.transform(depth_img.astype(np.float32)) / 255.0
+		if self.use_depth_img:
+			# depth image
+			depth_img = load_img(depth_img_path)
+			# orig_depth_img = copy.deepcopy(depth_img)[:, :, ::-1]
+			depth_img, _, _, rot, _ = augmentation(
+				depth_img, bbox, self.data_split, do_flip=do_flip
+			)
+			depth_img = self.transform(depth_img.astype(np.float32)) / 255.0
+	
+			inputs = {
+				"img": img,
+				"depth_img": depth_img
+			}
+		else:
+			inputs = {
+				"img": img
+			}
 
 		if self.data_split == "train":
 			# 2D joint coordinate
@@ -184,10 +203,6 @@ class DEX_YCB(Dataset):
 			mano_pose[self.root_joint_idx] = root_pose.reshape(3)
 			mano_pose = mano_pose.reshape(-1)
 
-			inputs = {
-				"img": img,
-				"depth_img": depth_img
-			}
 			targets = {
 				"joints_img": joints_img,
 				"joints_coord_cam": joints_coord_cam,
@@ -195,13 +210,8 @@ class DEX_YCB(Dataset):
 				"mano_shape": mano_shape,
 			}
 			meta_info = {"root_joint_cam": root_joint_cam}
-
 		else:
 			root_joint_cam = data["root_joint_cam"]
-			inputs = {
-				"img": img,
-				"depth_img": depth_img
-			}
 			targets = {}
 			meta_info = {"root_joint_cam": root_joint_cam}
 
