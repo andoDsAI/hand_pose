@@ -34,18 +34,18 @@ class HandPoseNet(nn.Module):
         self.FIT = FIT
         self.SET = SET
         self.regressor = regressor
-        self.conv1 = nn.Conv2d(1280, 256, 1)
+        self.conv1 = nn.Conv2d(512, 256, 1)
     
     def forward(self, inputs, targets, meta_info, mode):
         # get primary, secondary features
         p_feats, s_feats = self.backbone(inputs["img"])
 
         # # get depth features
-        # depth_feats, _, _ = self.pointnet(inputs["depth_img"])
+        depth_feats, _, _ = self.pointnet(inputs["depth_img"])
 
         # # combine depth features to other features
-        # p_feats = torch.cat([p_feats, depth_feats], dim=1)  # concat depth features to primary features
-        # p_feats = F.relu(self.conv1(p_feats))
+        p_feats = torch.cat([p_feats, depth_feats], dim=1)  # concat depth features to primary features
+        p_feats = F.relu(self.conv1(p_feats))
 
         # s_feats = torch.cat([s_feats, depth_feats], dim=1)  # concat depth features to secondary features
         # s_feats = F.relu(self.conv1(s_feats))
