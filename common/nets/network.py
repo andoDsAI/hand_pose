@@ -10,6 +10,15 @@ from nets.transformer import Transformer
 from nets.pointnet import PointNetFeat
 
 
+fpn_models = {
+	"resnet18": FPN(fpn_size=512, lateral_sizes=[256, 128, 64], deep_feature_size=256, backend="resnet18", pretrained=True),
+	"resnet34": FPN(fpn_size=512, lateral_sizes=[256, 128, 64], deep_feature_size=256, backend="resnet34", pretrained=True),
+	"resnet50": FPN(fpn_size=2048, lateral_sizes=[1024, 512, 256], deep_feature_size=256, backend="resnet50", pretrained=True),
+	"resnet101": FPN(fpn_size=2048, lateral_sizes=[1024, 512, 256], deep_feature_size=256, backend="resnet101", pretrained=True),
+	"resnet152": FPN(fpn_size=2048, lateral_sizes=[1024, 512, 256], deep_feature_size=256, backend="resnet152", pretrained=True),
+}
+
+
 class HandPoseNet(nn.Module):
     def __init__(
         self,
@@ -95,7 +104,7 @@ def init_weights(m):
 
 
 def get_model(mode: str = "train") -> nn.Module:
-    backbone = FPN(pretrained=True)
+    backbone = fpn_models[cfg.backend]
     point_net = PointNetFeat(global_feat=False, feature_transform=False)
     FIT = Transformer(injection=True)   # feature injecting transformer
     SET = Transformer(injection=False)  # self enhancing transformer

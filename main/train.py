@@ -14,7 +14,7 @@ def parse_args():
 	parser = argparse.ArgumentParser()
 	parser.add_argument("--gpu", type=str, dest="gpu_ids")
 	parser.add_argument("--continue", dest="continue_train", action="store_true")
-	parser.add_argument("--gradient_accumulation_steps", default=16, type=int, help="Gradient accumulation steps")
+	parser.add_argument("--gradient_accumulation_steps", default=2, type=int, help="Gradient accumulation steps")
 	parser.add_argument("--max_grad_norm", default=1.0, type=float, help="Max gradient norm.")
 	parser.add_argument("--seed", default=42, type=int, help="Seed.")
 	parser.add_argument("--log_steps", default=100, type=int)

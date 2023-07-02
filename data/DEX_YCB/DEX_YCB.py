@@ -30,7 +30,7 @@ class DEX_YCB(Dataset):
   
 		self.use_full_data = cfg.use_full_data
 		if self.use_full_data:
-			self.anno_file = "DEX_YCB_s0_{}.json"
+			self.anno_file = "DEX_YCB_s0_{}_data.json"
 		else:
 			self.anno_file = "DEX_YCB_s0_{}_subset_data.json"
 
@@ -251,6 +251,6 @@ class DEX_YCB(Dataset):
 			)
 
 	def print_eval_result(self, test_epoch):
-		print("Epoch %d evaluation result:" % test_epoch)
+		print(f"Epoch {test_epoch} evaluation result:")
 		print("MPJPE : %.2f mm" % np.mean(self.eval_result[0]))
 		print("PA MPJPE : %.2f mm" % np.mean(self.eval_result[1]))
