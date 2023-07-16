@@ -87,6 +87,41 @@ class STNKd(nn.Module):
         x = x.view(-1, self.k, self.k)
         return x
 
+class PointNetDenseFusion(nn.Module):
+    def __init__(self, num_points=256):
+        super(PointNetDenseFusion, self).__init__()
+        self.conv1 = torch.nn.Conv2d(3, 64, 1)
+        self.conv2 = torch.nn.Conv2d(64, 128, 1)
+
+        self.e_conv1 = torch.nn.Conv2d(256, 64, 1)
+        self.e_conv2 = torch.nn.Conv2d(64, 128, 1)
+
+        self.conv5 = torch.nn.Conv2d(256, 512, 1)
+        self.conv6 = torch.nn.Conv2d(512, 1024, 1)
+
+        self.num_points = num_points
+        self.pool = torch.nn.MaxPool2d(8, 8)
+        self.ap1 = torch.nn.AvgPool1d(self.num_points)
+
+    def forward(self, x, emb):
+        x = F.relu(self.conv1(x))
+        x = self.pool(x)
+        emb = F.relu(self.e_conv1(emb))
+        pointfeat_1 = torch.cat((x, emb), dim=1)
+
+        x = F.relu(self.conv2(x))
+        emb = F.relu(self.e_conv2(emb))
+        pointfeat_2 = torch.cat((x, emb), dim=1)
+
+        x = F.relu(self.conv5(pointfeat_2))
+        x = F.relu(self.conv6(x))
+        bs, di, _, _ = x.size()
+        x = x.view(bs, di,-1)
+        ap_x = self.ap1(x)
+
+        ap_x = ap_x.repeat(1, 1, self.num_points).view(bs, 1024, 32, 32)
+        return torch.cat([pointfeat_1, pointfeat_2, ap_x], 1)
+ #128 + 256 + 1024
 
 class PointNetFeat(nn.Module):
     def __init__(self, global_feat=True, feature_transform=False):

@@ -7,7 +7,7 @@ from config import cfg
 from nets.fpn import FPN
 from nets.regressor import Regressor
 from nets.transformer import Transformer
-from nets.pointnet import PointNetFeat
+from nets.pointnet import PointNetFeat, PointNetDenseFusion
 
 
 fpn_models = {
@@ -24,6 +24,7 @@ class HandPoseNet(nn.Module):
         self,
         backbone: nn.Module = FPN(pretrained=True),
         point_net: nn.Module = PointNetFeat(global_feat=False),
+        point_net_df: nn.Module = PointNetDenseFusion(num_points=1024),
         FIT: nn.Module = Transformer(injection=True),
         SET: nn.Module = Transformer(injection=False),
         regressor: nn.Module = Regressor()
@@ -31,20 +32,23 @@ class HandPoseNet(nn.Module):
         super(HandPoseNet, self).__init__()
         self.backbone = backbone
         self.pointnet = point_net
+        self.pointnet_df = point_net_df
         self.FIT = FIT
         self.SET = SET
         self.regressor = regressor
-        self.conv1 = nn.Conv2d(512, 256, 1)
+        self.conv1 = nn.Conv2d(1664, 256, 1)
     
     def forward(self, inputs, targets, meta_info, mode):
         # get primary, secondary features
-        p_feats, s_feats = self.backbone(inputs["img"])
+        p_feats, s_feats = self.backbone(inputs["img"]) #256
 
         # # get depth features
-        depth_feats, _, _ = self.pointnet(inputs["depth_img"])
-
+        # depth_feats, _, _ = self.pointnet(inputs["depth_img"])
+        pixel_wise_df = self.pointnet_df(inputs["depth_img"], p_feats) # 1408
+        # print('>>>>>>>>>', pixel_wise_df.shape)
         # # combine depth features to other features
-        p_feats = torch.cat([p_feats, depth_feats], dim=1)  # concat depth features to primary features
+        
+        p_feats = torch.cat([p_feats, pixel_wise_df], dim=1)  # concat depth features to primary features
         p_feats = F.relu(self.conv1(p_feats))
 
         # s_feats = torch.cat([s_feats, depth_feats], dim=1)  # concat depth features to secondary features
@@ -106,15 +110,18 @@ def init_weights(m):
 def get_model(mode: str = "train") -> nn.Module:
     backbone = fpn_models[cfg.backend]
     point_net = PointNetFeat(global_feat=False, feature_transform=False)
+    point_net_df = PointNetDenseFusion(num_points=1024)
     FIT = Transformer(injection=True)   # feature injecting transformer
     SET = Transformer(injection=False)  # self enhancing transformer
     regressor = Regressor()
     
     if mode == "train":
         point_net.apply(init_weights)
+        point_net_df.apply(init_weights)
+        
         FIT.apply(init_weights)
         SET.apply(init_weights)
         regressor.apply(init_weights)
     
-    model = HandPoseNet(backbone, point_net, FIT, SET, regressor)
+    model = HandPoseNet(backbone, point_net, point_net_df, FIT, SET, regressor)
     return model
