@@ -1,7 +1,8 @@
 import torch
 import torch.nn as nn
 from torch.nn import functional as F
-
+import numpy as np
+import matplotlib.pyplot as plt
 
 from config import cfg
 from nets.fpn import FPN
@@ -36,26 +37,20 @@ class HandPoseNet(nn.Module):
         self.FIT = FIT
         self.SET = SET
         self.regressor = regressor
-        self.conv1 = nn.Conv2d(1664, 256, 1)
+        self.conv1 = nn.Conv2d(in_channels=1408, out_channels=640, kernel_size=1, stride=1, padding=0)
+        self.conv2 = nn.Conv2d(in_channels=640, out_channels=256, kernel_size=1, stride=1, padding=0)
     
     def forward(self, inputs, targets, meta_info, mode):
-        # get primary, secondary features
         p_feats, s_feats = self.backbone(inputs["img"]) #256
-
-        # # get depth features
-        # depth_feats, _, _ = self.pointnet(inputs["depth_img"])
+        
         pixel_wise_df = self.pointnet_df(inputs["depth_img"], p_feats) # 1408
-        # print('>>>>>>>>>', pixel_wise_df.shape)
-        # # combine depth features to other features
         
-        p_feats = torch.cat([p_feats, pixel_wise_df], dim=1)  # concat depth features to primary features
-        p_feats = F.relu(self.conv1(p_feats))
-
-        # s_feats = torch.cat([s_feats, depth_feats], dim=1)  # concat depth features to secondary features
-        # s_feats = F.relu(self.conv1(s_feats))
+        pixel_wise_df = F.relu(self.conv1(pixel_wise_df))
+        pixel_wise_df = F.relu(self.conv2(pixel_wise_df))
+              
         
-        feats = self.FIT(s_feats, p_feats)
-        feats = self.SET(feats, feats)
+        feats = self.SET(pixel_wise_df, pixel_wise_df) #(4-256-32-32)
+        
         
         if mode == "train":
             gt_mano_params = torch.cat([targets["mano_pose"], targets["mano_shape"]], dim=1)
